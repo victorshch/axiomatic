@@ -21,10 +21,13 @@ print(now.perform_marking(ts))
 class1 = pd.DataFrame(np.random.random((4, 2)))
 class2 = pd.DataFrame(np.random.random((4, 2)))
 
-print(now.perform_marking(class1))
-print(now.perform_marking(class2))
+c1 = now.perform_marking(class1)
+c2 = now.perform_marking(class2)
 
-rec = AbnormalBehaviorRecognizer(now, {"class1": class1, "class2": class2}, {"maxdelta": 2, "bound": 0})
+print(c1)
+print(c2)
+
+rec = AbnormalBehaviorRecognizer(now, {"class1": c1, "class2": c2}, {"maxdelta": 2, "bound": 0})
 res = rec.recognize(ts)
 
 for a, b in res:
