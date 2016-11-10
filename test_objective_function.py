@@ -28,17 +28,17 @@ c2 = now.perform_marking(class2)
 print(c1)
 print(c2)
 
-rec = AbnormalBehaviorRecognizer(now, {"class1": c1, "class2": c2}, {"maxdelta": 2, "bound": 0})
+rec = AbnormalBehaviorRecognizer(now, {"class1": c1, "class2": c2}, {"maxdelta": 0.1, "bound": 0})
 res = rec.recognize(ts)
 
 for a, b in res:
     print(a, b)
 
 now = ObjectiveFunction(1, 0)
-print(now.calculate_one(rec, ts, (0, "class1")))
+print(now.calculate_one(rec, ts, "class1"))
 
 now = ObjectiveFunction(0, 1)
-print(now.calculate_one(rec, ts, (0, "class1")))
+print(now.calculate_one(rec, ts, "class1"))
 
 now = ObjectiveFunction(1, 2)
-print(now.calculate(rec, [(ts, (0, "class1")), (ts, (0, "class1"))]))
+print(now.calculate(rec, {"class1" : [ts, ts, ts]}))

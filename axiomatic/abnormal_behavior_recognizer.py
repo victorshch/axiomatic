@@ -29,11 +29,13 @@ class AbnormalBehaviorRecognizer(object):
             now = self.model_dict[s]
             
             for i in range(len(mark)):
-                for j in range(i + len(now), i + len(now) + self.maxdelta):
-                    if j <= len(mark):
-                        dist, path = fastdtw(self.model_dict[s], mark[i: j], dist = lambda a, b: a == b)
+                bound1 = max(i + 1, int(i + len(now) * (1 - self.maxdelta)))
+                bound2 = min(len(mark) + 1, int(i + len(now) * (1 + self.maxdelta) + 1))
 
-                        if dist <= self.bound * len(path):
-                            res.append((i, s))
-                            break
+                for j in range(bound1, bound2):
+                    dist, path = fastdtw(self.model_dict[s], mark[i: j], dist = lambda a, b: a == b)
+
+                    if dist <= self.bound * len(path):
+                        res.append((i, s))
+                        break
         return res

@@ -18,7 +18,7 @@ class ObjectiveFunction(object):
         Параметры:
         recognizer - данный распознаватель (AbnormalBehaviorRecognizer)
         ts - траектория
-        true_class - класс нештатного поведения (пара позиция - класс) на данном участке
+        true_class - класс нештатного поведения на данном участке
         """
 
         res = recognizer.recognize(ts)
@@ -26,9 +26,9 @@ class ObjectiveFunction(object):
         second_error = 1
         
         for x in res:
-            if x != true_class:
+            if x[1] != true_class or second_error == 0:
                 first_error += 1
-            if x == true_class:
+            if x[1] == true_class:
                 second_error = 0
         return first_error * self.k_e1 + second_error * self.k_e2
     
@@ -36,11 +36,12 @@ class ObjectiveFunction(object):
         """Вычислим стоимость ошибок распознавателя на данном множестве учатков, если для них известен истинный класс
         Параметры:
         recognizer - данный распознаватель
-        data_set - список пар (траектория - true_class)
+        data_set - dict (имя класса - список траекторий)
         """
 
         res = 0
 
-        for ts, true_class in data_set:
-            res += self.calculate_one(recognizer, ts, true_class)
+        for true_class in data_set:
+            for ts in data_set[true_class]:
+                res += self.calculate_one(recognizer, ts, true_class)
         return res
