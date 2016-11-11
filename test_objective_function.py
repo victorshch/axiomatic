@@ -1,3 +1,4 @@
+# coding=UTF-8
 from axiomatic.objective_function import ObjectiveFunction
 import pandas as pd
 import numpy as np
