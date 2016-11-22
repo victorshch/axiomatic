@@ -25,3 +25,23 @@ class AxiomSystem(object):
                 result[i] = -1
         return result
 
+class MinMaxAxiom(object):
+    def __init__(self, params):
+        self.l = params["l"]
+        self.r = params["r"]
+        self.pmin = params["pmin"]
+        self.pmax = params["pmax"]
+
+    def run(self, ts):
+        res = np.zeros(len(ts))
+        print(len(ts))
+
+        for i in range(len(ts)):
+            res[i] = 1
+
+            for j in range(max(0, i - self.l), min(len(ts), i + self.r + 1)):
+                for k in range(len(ts.columns)):
+                    if self.pmin > ts[k][j] or self.pmax < ts[k][j]:
+                        res[i] = 0
+                        break
+        return res
