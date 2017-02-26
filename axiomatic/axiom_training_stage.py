@@ -20,7 +20,7 @@ class FrequencyECTrainingStage(object):
                     for dim in range(maxdim):
                         for sign in [-1, 1]:
                             abstract_axiom = AbstractAxiom(sign, dim, axiom)
-                            rranges = (slice(0, self.max_window, 1), slice(0, self.max_window, 1))
+                            rranges = (slice(0, len(normal[0]), 1), slice(0, self.max_window, 1))
                             rranges = rranges + abstract_axiom.bounds(data_set[name] + normal, self.num_part)
 
                             resbrute = optimize.brute(abstract_axiom.static_run, rranges,
@@ -34,6 +34,9 @@ class FrequencyECTrainingStage(object):
                             high = sorted(res, reverse=True).index(False) if False in res else len(res)
 
                             axioms = axioms[0: min(self.num_axioms, high)]
+
+                            print(axioms)
+
                             axioms = [AbstractAxiom(sign, dim, axiom, params[2:]) for params in axioms]
                             artifacts["axioms"] += axioms
         

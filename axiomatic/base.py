@@ -37,8 +37,7 @@ class AbstractAxiom(object):
             self.concrete_axiom = axiom(params)
 
     def bounds(self, data, num_part):
-        par = [ts[self.dim] for ts in data]
-        bnd = self.axiom.bounds(par) #[ts[self.dim] for ts in data])
+        bnd = self.axiom.bounds([ts[self.dim] for ts in data])
         res = tuple()
 
         for now in bnd:
@@ -79,6 +78,7 @@ class MinMaxAxiom(object):
 
     def __init__(self, params):
         self.l, self.r, self.pmin, self.delta = params
+        self.r += self.l
 
     def bounds(data):
         best, worst = max(data[0]), min(data[0])
