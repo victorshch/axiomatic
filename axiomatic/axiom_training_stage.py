@@ -13,11 +13,17 @@ class FrequencyECTrainingStage(object):
     def train(self, data_set, artifacts):
         normal = data_set["normal"]
         maxdim = data_set["normal"][0].shape[1]
+        artifacts = dict()
+        artifacts["axioms"] = dict()
 
         for name in data_set:
             if name != "normal":
-                for axiom in self.axiom_list:
-                    for dim in range(maxdim):
+                class_axioms = []
+
+                for dim in range(maxdim):
+                    dim_axioms = []
+
+                    for axiom in self.axiom_list:
                         for sign in [-1, 1]:
                             abstract_axiom = AbstractAxiom(sign, dim, axiom)
                             rranges = (slice(0, len(normal[0]), 1), slice(0, self.max_window, 1))
@@ -35,9 +41,14 @@ class FrequencyECTrainingStage(object):
 
                             axioms = axioms[0: min(self.num_axioms, high)]
 
-                            print(axioms)
-
-                            axioms = [AbstractAxiom(sign, dim, axiom, params[2:]) for params in axioms]
-                            artifacts["axioms"] += axioms
-        
+                            axioms = [(params, sign, dim) for params in axioms]
+                            dim_axioms += axioms
+                    
+                    dim_axioms.sort(reverse=True)
+                    dim_axioms = dim_axioms[0: self.num_axioms]
+                    print(dim_axioms)
+                    dim_axioms = [AbstractAxiom(sign, dim, axiom, params[2:]) for params, sign, dim in dim_axioms]
+                    
+                    class_axioms += dim_axioms
+                artifacts["axioms"][name] = class_axioms
         return artifacts

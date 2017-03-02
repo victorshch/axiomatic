@@ -42,7 +42,7 @@ class AbstractAxiom(object):
 
         for now in bnd:
             left, right = now
-            step = (right - left) / int(num_part ** (1 / (self.axiom.num_params - 2)))
+            step = (right - left) / num_part
             res = res + (slice(left, right, step), )
         return res
 
@@ -61,8 +61,8 @@ class AbstractAxiom(object):
 
         for ts in data:
             now = AbstractAxiom(self.sign, self.dim, self.axiom, params)
-            freq += max(now.run(ts))
-        return freq
+            freq += sum(now.run(ts))
+        return freq / len(data)
 
     def static_run(self, params, *data):
         params = list(params)
