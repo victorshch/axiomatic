@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from axiomatic.base import AxiomSystem, MinMaxAxiom, IntegralAxiom
-from axiomatic.axiom_training_stage import FrequencyECTrainingStage
+from axiomatic.axiom_training_stage import FrequencyECTrainingStage, FrequencyAxiomTrainingStage
 
 class SampleAxiom(object):
     def __init__(self, params):
@@ -29,4 +29,9 @@ for i in range(6):
 print()
 print("axioms:")
 
-stage.train({"normal": [ts[0], ts[1], ts[2]], "class1": [ts[3], ts[4], ts[5]]}, {"axioms": []})
+artifacts = stage.train({"normal": [ts[0], ts[1], ts[2]], "class1": [ts[3], ts[4], ts[5]]}, {"axioms": []})
+
+stage = FrequencyAxiomTrainingStage({'num_axioms': 10, 'max_depth': 5, 'num_step_axioms': 10})
+artifacts = stage.train({"normal": [ts[0], ts[1], ts[2]], "class1": [ts[3], ts[4], ts[5]]}, artifacts)
+
+print(artifacts["full_axioms"])

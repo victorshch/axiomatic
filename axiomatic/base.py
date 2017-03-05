@@ -27,6 +27,49 @@ class AxiomSystem(object):
         return result
 
 
+class Axiom(object):
+    def __init__(self, axiom = []):
+        self.dnf = [] if axiom == [] else [[axiom]]
+
+    def run(self, ts):
+        res = np.zeros(len(ts))
+
+        for kf in self.dnf:
+            now = np.ones(len(ts))
+
+            for axiom in kf:
+                now = np.logical_and(now, axiom.run(ts))
+            res = np.logical_or(res, now)
+        return res
+
+    def run_all(self, data_abnorm, data_norm):
+        res = 0
+
+        for ts in data_abnorm:
+            res += sum(self.run(ts))
+        res /= len(data_abnorm)
+
+        freq = 0
+
+        for ts in data_norm:
+            freq += sum(self.run(ts))
+        freq /= len(data_norm)
+        return res / (1 + freq)
+
+    def logical_or(self, another):
+        res = Axiom()
+        res.dnf = self.dnf + another.dnf
+        return res
+
+    def logical_and(self, another):
+        res = Axiom()
+
+        for x1 in self.dnf:
+            for x2 in another.dnf:
+                res.dnf.append(x1 + x2)
+        return res
+
+
 class AbstractAxiom(object):
     def __init__(self, sign, dim, axiom, params = []):
         self.sign = sign

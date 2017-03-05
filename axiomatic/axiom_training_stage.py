@@ -1,5 +1,5 @@
 from scipy import optimize
-from axiomatic.base import AbstractAxiom
+from axiomatic.base import AbstractAxiom, Axiom
 from scipy.ndimage import maximum_filter
 import numpy as np
 
@@ -35,6 +35,7 @@ class FrequencyECTrainingStage(object):
                             res = (resbrute[3] == maximum_filter(resbrute[3], size=3)).ravel()
                             
                             axioms = list(zip(res, resbrute[3].ravel(), *[param.ravel() for param in resbrute[2]]))
+                            axioms = [(param[0], param[1], int(param[2]), int(param[3]), *param[4:]) for param in axioms]
                             axioms.sort(reverse=True)
 
                             high = sorted(res, reverse=True).index(False) if False in res else len(res)
@@ -51,4 +52,44 @@ class FrequencyECTrainingStage(object):
                     
                     class_axioms += dim_axioms
                 artifacts["axioms"][name] = class_axioms
+        return artifacts
+
+
+class FrequencyAxiomTrainingStage:
+    def __init__(self, config):
+        self.num_axioms = config['num_axioms']
+        self.num_step_axioms = config['num_step_axioms']
+        self.max_depth = config['max_depth']
+
+    def train(self, data_set, artifacts):
+        axioms = artifacts["axioms"]
+        artifacts["full_axioms"] = dict()
+        normal = data_set["normal"]
+
+        for name in axioms:
+            now = [Axiom(x) for x in axioms[name]]
+            nums = [x.run_all(data_set[name], normal) for x in now]
+            
+            for i in range(self.max_depth):
+                add = []
+
+                for pos1 in range(len(now)):
+                    for pos2 in range(pos1 + 1, len(now)):
+                        axiom_or = now[pos1].logical_or(now[pos2])
+                        axiom_and = now[pos1].logical_and(now[pos2])
+                        num_or = axiom_or.run_all(data_set[name], normal)
+                        num_and = axiom_and.run_all(data_set[name], normal)
+
+                        if max(num_or, num_and) > min(nums[pos1], nums[pos2]):
+                            add.append(axiom_or if num_or > num_and else axiom_and)
+                now += add
+                nums = [x.run_all(data_set[name], normal) for x in now]
+                res = sorted(list(zip(nums, now)), key=lambda x: x[0])[0: self.num_step_axioms]
+
+                now = [x[1] for x in res]
+                nums = [x[0] for x in res]
+
+            res = sorted(list(zip(nums, now)), key=lambda x: x[0])[0: self.num_axioms]
+            res = [x[1] for x in res]
+            artifacts["full_axioms"][name] = res
         return artifacts
