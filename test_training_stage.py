@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from axiomatic.base import AxiomSystem, MinMaxAxiom
+from axiomatic.base import AxiomSystem, MinMaxAxiom, IntegralAxiom
 from axiomatic.axiom_training_stage import FrequencyECTrainingStage
 
 class SampleAxiom(object):
@@ -12,7 +12,7 @@ class SampleAxiom(object):
     def run(self, ts):
         return ts[0].shift(1) - ts[0] > 0
 
-stage = FrequencyECTrainingStage({'num_part': 5, 'max_window': 5, 'num_axioms': 10, 'axiom_list': [MinMaxAxiom]})
+stage = FrequencyECTrainingStage({'num_part': 5, 'max_window': 5, 'num_axioms': 10, 'axiom_list': [MinMaxAxiom, IntegralAxiom]})
 
 ts = []
 

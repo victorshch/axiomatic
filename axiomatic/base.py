@@ -37,7 +37,7 @@ class AbstractAxiom(object):
             self.concrete_axiom = axiom(params)
 
     def bounds(self, data, num_part):
-        bnd = self.axiom.bounds([ts[self.dim] for ts in data])
+        bnd = self.axiom.bounds([ts[self.dim].values for ts in data])
         res = tuple()
 
         for now in bnd:
@@ -50,7 +50,7 @@ class AbstractAxiom(object):
         res = np.zeros(len(ts))
 
         for i in range(len(ts)):
-            res[i] = self.concrete_axiom.run_one(ts, i)
+            res[i] = self.concrete_axiom.run_one(ts[self.dim].values, i)
         
         if self.sign == 1:
             return res
@@ -77,8 +77,9 @@ class MinMaxAxiom(object):
     num_params = 4
 
     def __init__(self, params):
-        self.l, self.r, self.pmin, self.delta = params
+        self.l, self.r, self.pmin, self.pmax = params
         self.r += self.l
+        self.pmax += self.pmin
 
     def bounds(data):
         best, worst = max(data[0]), min(data[0])
@@ -89,9 +90,26 @@ class MinMaxAxiom(object):
         return ((worst, best), (0, best - worst))
     
     def run_one(self, ts, ind):
-        for i in range(max(0, ind - self.l), min(len(ts), ind + self.r + 1)):
-            if ts[0][i] > self.pmin + self.delta or ts[0][i] < self.pmin:
-                return False
-        return True
-   #     now = ts[0][max(0, ind - self.l): min(len(ts), ind + self.r + 1)] 
-   #     return min(min(self.pmin <= now, now <= self.pmin + self.delta))
+        seg = ts[max(0, ind - self.l): min(len(ts), ind + self.r + 1)]
+        return self.pmin <= min(seg) and max(seg) <= self.pmax
+
+
+class IntegralAxiom(object):
+    num_params = 4
+
+    def __init__(self, params):
+        self.l, self.r, self.pmin, self.pmax = params
+        self.r += self.l
+        self.pmax += self.pmin
+
+    def bounds(data):
+        bestsum = sum(data[0])
+
+        for ts in data:
+            bestsum = max(bestsum, sum(ts))
+        return ((0, bestsum), (0, bestsum))
+    
+    def run_one(self, ts, ind):
+        seg = ts[max(0, ind - self.l): min(len(ts), ind + self.r + 1)]
+        now = sum(seg) - seg[0] / 2 - seg[len(seg) - 1] / 2
+        return self.pmin <= now <= self.pmax
