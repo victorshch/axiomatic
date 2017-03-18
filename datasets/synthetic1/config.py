@@ -11,15 +11,11 @@ path = './generated_data'
 csv_header = ['time', 'row_1']
 
 #definition of creating dataset
-dataset = {
-	'gauss': {
-		'mu': 0,
-		'sigma': 2
-	},
-
-	'length_deformation': {
-		'max': 2,
-		'min': 1
+datasetConf = {
+	'noise': {
+		'sigma': 2,
+		'length_deformation_min': 1,
+		'length_deformation_max': 2
 	},
 
 	'aliases': {
@@ -31,6 +27,9 @@ dataset = {
 		'F': FullSquareSegment(10, ignore_base=True),
 		'G': HalfSquareSegment(10, ignore_base=True)
 	},	
+        
+        'abnormalSequenceLength_min': 3,
+        'abnormalSequenceLength_max': 6,
 
 	'classes': {
 		# first type of trajectories

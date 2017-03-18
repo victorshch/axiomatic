@@ -17,7 +17,9 @@ class Segment:
 	def setStep(self, step):
 		self.step = step;
 
-	def generate(self, time, base):
+	def generate(self, base, step = None):
+                if step is None:
+                    step = self.step
 		result = []
 		x = 0
 		i = 0
@@ -26,8 +28,8 @@ class Segment:
 			base = 0
 
 		while(x <= self.length):
-			value = base + self.getValue(x) + random.gauss(self.gauss_mu, self.gauss_sigma)
-			result.append([time + i, value])
+			value = base + self.getValue(x)
+			result.append(value)
 			i += 1
-			x += self.step
-		return [result, time + i]
+			x += step
+		return result
