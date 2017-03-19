@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from axiomatic.base import AxiomSystem
+from axiomatic.base import AxiomSystem, MinMaxAxiom
 
 class SampleAxiom(object):
     def __init__(self, params):
@@ -11,10 +11,11 @@ class SampleAxiom(object):
     def run(self, ts):
         return ts[0].shift(1) - ts[0] > 0
 
-axiom_list = [SampleAxiom(1), SampleAxiom(1)]
+params = {"l": 1, "r": 1, "pmin": -0.8, "pmax": 0.8}
+axiom_list = [MinMaxAxiom(params)]
 ts = pd.DataFrame(np.random.random((10, 2)))
 print(ts)
-print(SampleAxiom(1).run(ts))
+print(MinMaxAxiom(params).run(ts))
 
 now = AxiomSystem(axiom_list)
 print(now.perform_marking(ts))
