@@ -131,7 +131,7 @@ def generateClass(name, classConf, aliases, noiseConf = dict(sigma=1,length_defo
         segments, str_segments = generateSegments(classConf, aliases)
         trajectory = Trajectory(segments)    
         generatedTraj = np.array(trajectory.generate(**noiseConf))
-        result.append(pd.DataFrame(generatedTraj))
+        result.append(pd.DataFrame(dict(row1=generatedTraj, row2=generatedTraj)))
     return result
 
 def generateDataset(verbose=False, **conf):
