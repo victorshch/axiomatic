@@ -1,9 +1,7 @@
-import os
-import csv
-import random
-import sys
 import numpy as np
 import pandas as pd
+import copy
+import random
 
 from generate.trajectory import Trajectory
 
@@ -136,8 +134,9 @@ def generateClass(name, classConf, aliases, noiseConf = dict(sigma=1,length_defo
         result.append(pd.DataFrame(generatedTraj))
     return result
 
-def generateFold(verbose=False, **conf):
+def generateDataset(verbose=False, **conf):
     result = {}
+    conf = copy.deepcopy(conf)
     
     classList = conf['classes'].keys()
     classList.remove('normal')
@@ -145,14 +144,22 @@ def generateFold(verbose=False, **conf):
     abnormalSequences = generateAbnormalSequences(len(classList), conf['abnormalSequenceLength_min'], conf['abnormalSequenceLength_max'], alphabet)
     abnormalSequencesForClasses = dict(zip(classList, abnormalSequences))
     
-    for name, classConf in conf['classes'].items():
-        if verbose: print('Generating trajectories for class: {0}'.format(name))
-        if name == 'normal': continue
-        classConf['abnormalSequence'] = abnormalSequencesForClasses[name]
-        classConf['removeSequences'] = [abnormalSequencesForClasses[clName] for clName in classList if clName != name]
-        result[name] = generateClass(name, classConf, conf['aliases'], conf['noise'], verbose)
-    if 'normal' in conf['classes']:
-        result['normal'] = generateNormalClass(conf['classes']['normal'], conf['aliases'], conf['noise'], conf['classes'])
+    for foldName, foldConf in conf['folds'].items():
+        result[foldName] = {}
+        for name, classConf in conf['classes'].items():
+            if verbose: print('Generating trajectories for class: {0}'.format(name))
+            if name == 'normal': continue
+            classConf['abnormalSequence'] = abnormalSequencesForClasses[name]
+            classConf['removeSequences'] = [abnormalSequencesForClasses[clName] for clName in classList if clName != name]
+            oldCount = classConf['count']
+            classConf['count'] = int(oldCount * foldConf['count_factor'])
+            result[foldName][name] = generateClass(name, classConf, conf['aliases'], conf['noise'], verbose)
+            classConf['count'] = oldCount
+        if 'normal' in conf['classes']:
+            oldCount = classConf['count']
+            classConf['count'] = int(oldCount * foldConf['count_factor'])
+            result[foldName]['normal'] = generateNormalClass(conf['classes']['normal'], conf['aliases'], conf['noise'], conf['classes'])
+            classConf['count'] = oldCount
     return result
 
 #if 'length_deformation' in config.dataset:
