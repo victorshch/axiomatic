@@ -56,7 +56,7 @@ class FrequencyECTrainingStage(object):
                             res = (resbrute[3] == maximum_filter(resbrute[3], size=3)).ravel()
                             
                             axioms = list(zip(res, resbrute[3].ravel(), *[param.ravel() for param in resbrute[2]]))
-                            axioms = [(param[0], param[1], int(param[2]), int(param[3]), *param[4:]) for param in axioms]
+                            axioms = [[param[0], param[1], int(param[2]), int(param[3])] + param[4:] for param in axioms]
                             axioms.sort(reverse=True)
 
                             high = sorted(res, reverse=True).index(False) if False in res else len(res)
