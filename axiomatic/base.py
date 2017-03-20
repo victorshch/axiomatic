@@ -8,7 +8,7 @@ class AxiomSystem(object):
     
     # возвращает разметку временного ряда ts как array-like (напр., np.array) с номерами аксиом, выполняющихся в соотв. точках ts
     def perform_marking(self, ts):
-        axiom_result = np.empty(shape=[len(ts[0]), 0])
+        axiom_result = np.empty(shape=[ts.shape[0], 0])
 
         for x in self.axiom_list:
             axiom_result = np.column_stack((axiom_result, x.run(ts)))
