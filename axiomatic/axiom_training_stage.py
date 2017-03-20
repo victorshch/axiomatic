@@ -1,6 +1,6 @@
 # coding=UTF-8
 from scipy import optimize
-from axiomatic.base import AbstractAxiom, Axiom
+from axiomatic.base import AbstractAxiom, Axiom, DummyAxiom
 from scipy.ndimage import maximum_filter
 import numpy as np
 import random
@@ -8,6 +8,21 @@ from sklearn.cluster import KMeans
 
 import settings
 
+class DummyAxiomTrainingStage(object):
+    """
+    This training stage creates dummy axioms for every abnormal behavior class
+    """
+    def __init__(self, dummy_axiom_count = 10):
+        self.dummy_axiom_count = dummy_axiom_count
+        pass
+    
+    def train(self, data_set, artifacts):
+        artifacts['axioms'] = {}
+        for cl in data_set['train'].keys():
+            if cl == 'normal': continue
+            artifacts['axioms'][cl] = [DummyAxiom()] * self.dummy_axiom_count
+        
+        return artifacts
 
 class FrequencyECTrainingStage(object):
     def __init__(self, config):

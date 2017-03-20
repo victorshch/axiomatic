@@ -27,6 +27,17 @@ class AxiomSystem(object):
                 result[i] = -1
         return result
 
+class DummyAxiom(object):
+    """
+    Dummy axiom is satisfied on every position in all dimensions
+    """
+    def run(self, ts):
+        """
+        Check whether axiom is satisfied.
+        @param ts: pd.DataFrame containing time series
+        @return: bool numpy.array, containing True values on positions where axiom is satisfied
+        """
+        return np.ones(ts.shape[0])
 
 class Axiom(object):
     def __init__(self, axiom = []):
