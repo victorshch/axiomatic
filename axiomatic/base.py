@@ -168,3 +168,19 @@ class IntegralAxiom(object):
         seg = ts[max(0, ind - self.l): min(len(ts), ind + self.r + 1)]
         now = sum(seg) - seg[0] / 2 - seg[len(seg) - 1] / 2
         return self.pmin <= now <= self.pmax
+
+class TrainingPipeline(object):
+    """
+    This class allows to run training stages consecutively
+    """
+    def __init__(self, stage_list):
+        self.stage_list = stage_list
+        
+    """
+    Run stages from self.stage_list consecutively on same artifacts dict
+    """
+    def train(self, data_set):
+        artifacts = dict()
+        for stage in self.stage_list:
+            artifacts = stage.train(data_set, artifacts)
+        return artifacts
