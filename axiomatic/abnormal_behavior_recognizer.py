@@ -34,7 +34,7 @@ class AbnormalBehaviorRecognizer(object):
                 bound2 = min(len(mark) + 1, int(i + len(now) * (1 + self.maxdelta) + 1))
 
                 for j in range(bound1, bound2):
-                    dist, path = fastdtw(self.model_dict[s], mark[i: j], dist = lambda a, b: a == b)
+                    dist, path = fastdtw(self.model_dict[s], mark[i: j], dist = lambda a, b: a != b)
 
                     if dist <= self.bound * len(path):
                         res.append((i, s))
