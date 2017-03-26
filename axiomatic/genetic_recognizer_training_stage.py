@@ -2,14 +2,16 @@ import copy
 
 import numpy as np
 import random
+from joblib import Parallel, delayed
 
 from base import AxiomSystem
 from abnormal_behavior_recognizer import AbnormalBehaviorRecognizer, QuestionMarkSymbol
 from objective_function import ObjectiveFunction
 
-def index_of(lst, func):
+def index_of(lst, a):
+    if not callable(a): a = lambda x: x == a
     for i, v in enumerate(lst):
-        if func(v): return i
+        if a(v): return i
     return -1
 
 def last_index_of(lst, func):
@@ -63,7 +65,7 @@ class Specimen(object):
         return [self.axiom_list[i] if i >= 0 else i for i in marking]
     
     def make_marking(self, axiom_list_with_numbers):
-        return [self.axiom_list.index(a) if not isinstance(a, int) else a for a in axiom_list_with_numbers]
+        return [index_of(self.axiom_list, a) if not isinstance(a, int) else a for a in axiom_list_with_numbers]
 
 class MutationActions(object):
     ReplaceWithOwn = 0
@@ -166,6 +168,9 @@ def weighted_random_choice(chromosomes):
         if current > pick:
             return chromosome
 
+def _calculateObjectiveForPopulation(self, specimen, data_set):
+    specimen.objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)
+
 class GeneticRecognizerTrainingStage(object):
     def __init__(self, config = dict()):
         self.iteration_count = config.get('iteration_count', 10)
@@ -178,6 +183,7 @@ class GeneticRecognizerTrainingStage(object):
         self.use_question_mark = config.get('use_question_mark', True)
         self.recognizer = config.get('recognizer', AbnormalBehaviorRecognizer)
         self.recognizer_config = config.get('recognizer_config', dict(bound=0.1,maxdelta=0.5))
+        self.n_jobs = config.get('n_jobs', 2)
         
     def generateInitialPopulation(self, axioms, data_set):
         population = []
@@ -201,9 +207,10 @@ class GeneticRecognizerTrainingStage(object):
     
     def calculateObjectiveForPopulation(self, population, data_set):
         # TODO parallelize
-        for specimen in population:
-            if specimen.objective is not None: continue
-            specimen.objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)[0];
+        result = Parallel(n_jobs=self.n_jobs)(delayed(_calculateObjectiveForPopulation)(self, specimen, data_set) for specimen in population)
+        #for i, specimen in enumerate(population):
+            #if specimen.objective is not None: continue
+            #specimen.objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)[0];
 
     def linearRankFitness(self, population):
         a = 2.0 * (self.selective_pressure - 1) / (len(population) - 1)
