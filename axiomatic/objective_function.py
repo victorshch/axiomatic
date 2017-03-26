@@ -31,7 +31,7 @@ class ObjectiveFunction(object):
                 first_error += 1
             if x[1] == true_class:
                 second_error = 0
-        return first_error * self.k_e1 + second_error * self.k_e2
+        return (first_error * self.k_e1 + second_error * self.k_e2, first_error, second_error)
     
     def calculate(self, recognizer, data_set):
         """Вычислим стоимость ошибок распознавателя на данном множестве учатков, если для них известен истинный класс
@@ -40,9 +40,9 @@ class ObjectiveFunction(object):
         data_set - dict (имя класса - список траекторий)
         """
 
-        res = 0
+        res = (0, 0, 0)
 
         for true_class in data_set:
             for ts in data_set[true_class]:
-                res += self.calculate_one(recognizer, ts, true_class)
+                res = tuple(map(sum, zip(res, self.calculate_one(recognizer, ts, true_class))))
         return res

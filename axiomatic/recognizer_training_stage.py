@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from base import AxiomSystem
+from axiomatic.base import AxiomSystem
 
 class DummyRecognizerTrainingStage(object):
     """
