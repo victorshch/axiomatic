@@ -6,7 +6,8 @@ import numpy as np
 import random
 from sklearn.cluster import KMeans
 
-import axiomatic.settings
+from axiomatic import settings
+
 
 class DummyAxiomTrainingStage(object):
     """
@@ -23,6 +24,7 @@ class DummyAxiomTrainingStage(object):
             artifacts['axioms'][cl] = [DummyAxiom()] * self.dummy_axiom_count
         
         return artifacts
+
 
 class FrequencyECTrainingStage(object):
     def __init__(self, config):
@@ -121,6 +123,7 @@ class FrequencyAxiomTrainingStage:
         artifacts["axioms"] = result
         return artifacts
 
+
 class ClusteringAxiom(object):
     def __init__(self, model, feature_extractor, dim, cluster_id):
         """
@@ -153,7 +156,7 @@ class ClusteringAxiom(object):
         last_part = sample_length - first_part
 
         for i in range(first_part, len(dim_ts) - last_part):
-            sample_ts = dim_ts[i - first_part, i - first_part + sample_length]
+            sample_ts = dim_ts[i - first_part:i - first_part + sample_length]
 
             computed_features_for_sample = []
             for feature in features:
@@ -186,7 +189,7 @@ class FeatureExtractionStage(object):
         @param ts_list: list of 1-dim numpy.array with time series
         @return: samples of initial time series
         """
-        ts_len = len(ts_list[0])
+        ts_len = min(len(ts) for ts in ts_list)
 
         n_samples = int(self.ratio * (ts_len - self.sample_length))
         samples = []
@@ -282,12 +285,12 @@ class KMeansClusteringAxiomStage(object):
 
         # generate axioms for this dimension
         axioms = []
-        for cluster in self.clustering_models[dim].n_clusters:
+        for cluster in range(self.clustering_models[dim].n_clusters):
             axioms.append(ClusteringAxiom(self.clustering_models[dim], self.feature_extractor, dim, cluster))
 
         return axioms
 
-    def train(self, dataset, artifacts=None):
+    def train(self, dataset, artifacts={}):
         """
         Train clustering stage, generate ClusteringAxiom axioms
         @param dataset: dataset in specific format
@@ -306,5 +309,6 @@ class KMeansClusteringAxiomStage(object):
             dim_axioms = self.train_clustering_model_for_dim(dim_time_series, dim)
             all_axioms.extend(dim_axioms)
 
+        artifacts['axioms'] = {}
         artifacts['axioms']['_clusters'] = all_axioms
         return artifacts
