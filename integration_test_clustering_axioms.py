@@ -6,6 +6,8 @@ from axiomatic.base import AxiomSystem, MinMaxAxiom, IntegralAxiom, TrainingPipe
 from axiomatic.axiom_training_stage import KMeansClusteringAxiomStage
 from axiomatic.recognizer_training_stage import DummyRecognizerTrainingStage
 from axiomatic.objective_function import ObjectiveFunction
+from axiomatic.abnormal_behavior_recognizer import AbnormalBehaviorRecognizer
+
 
 with open('datasets/debug_dataset.pickle', 'rb') as f:
     dataset = pickle.load(f)
@@ -21,7 +23,7 @@ artifacts = training_pipeline.train(dataset)
 print "Artifacts after training: ", artifacts
 
 recognizer = AbnormalBehaviorRecognizer(artifacts['axiom_system'], artifacts['abn_models'],
-                                        dict(bound=0.1,maxdelta=0.5))
+                                        dict(bound=0.1, maxdelta=0.5))
 
 obj_fn = ObjectiveFunction(1, 20)
 
