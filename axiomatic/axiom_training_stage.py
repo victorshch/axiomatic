@@ -139,15 +139,16 @@ class ClusteringAxiom(object):
         @param ts: pd.DataFrame time series
         @return: 2-dim bool np.array where True corresponds to positions where axiom is satisfied
         """
-        ans = np.full(ts.shape, False, dtype=bool)  # axiom can be satisfied only for specific dimension
+        ans = np.full(ts.shape[0], False, dtype=bool)  # axiom can be satisfied only for specific dimension
 
         # specific dimension of time series
-        dim_ts = ts.values[self.dim]
+        dim_ts = ts.values[:, self.dim]
 
         sample_length = self.feature_extractor.sample_length
         features = self.feature_extractor.features
 
-        # axiom can be satisfied only in central points of time series: from first_part position to len(ts) - 1 - last_part position
+        # axiom can be satisfied only in central points of time series:
+        # from first_part position to len(ts) - 1 - last_part position
         first_part = sample_length / 2
         last_part = sample_length - first_part
 
@@ -163,19 +164,9 @@ class ClusteringAxiom(object):
                     computed_features_for_sample.append(f)
 
             x = np.array(computed_features_for_sample)
-            ans[self.dim][i] = (self.model.predict(x) == self.cluster_id)
+            ans[i] = (self.model.predict(x) == self.cluster_id)
 
         return ans
-
-
-class DummyAxiom(object):
-    def run(self, ts):
-        """
-        Check whether axiom is satisfied.
-        @param ts: pd.DataFrame containing time series
-        @return: bool numpy.array, containing True values on positions where axiom is satisfied
-        """
-        return np.full(ts.shape, True, dtype=bool)  # dummy axiom is satisfied on every position in all dimensions
 
 
 class FeatureExtractionStage(object):
@@ -272,7 +263,7 @@ class KMeansClusteringAxiomStage(object):
 
         ts_for_dim = []
         for ts in ts_list:
-            ts_for_dim.append(ts.values[dim])
+            ts_for_dim.append(ts.values[:, dim])
 
         return ts_for_dim
 
@@ -304,10 +295,10 @@ class KMeansClusteringAxiomStage(object):
         """
 
         all_time_series = self.get_all_time_series(dataset['train'])
-        self.n_dimensions = all_time_series[0].shape[0]
+        self.n_dimensions = all_time_series[0].shape[1]
         self.clustering_models = [KMeans(**self.config.get('clustering_params', {})) for i in range(self.n_dimensions)]
 
-        all_axioms = [DummyAxiom()]
+        all_axioms = []
 
         for dim in range(self.n_dimensions):
             # list of specific dimension for all time series used for training
@@ -315,5 +306,5 @@ class KMeansClusteringAxiomStage(object):
             dim_axioms = self.train_clustering_model_for_dim(dim_time_series, dim)
             all_axioms.extend(dim_axioms)
 
-        artifacts['axioms'] = all_axioms
+        artifacts['axioms']['_clusters'] = all_axioms
         return artifacts
