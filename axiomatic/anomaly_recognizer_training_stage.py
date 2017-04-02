@@ -1,5 +1,5 @@
 from base import AxiomSystem
-import random
+import random, copy, time
 
 class AxiomsMarking(object):
     '''
@@ -67,6 +67,7 @@ class GeneticAlgorithm(object):
         self._crossover()
         self._mutate()
         self._evalPopulation()
+        self.currentIter += 1
         print('\t step done...')
         
     def Run(self):
@@ -82,6 +83,8 @@ class GeneticAlgorithm(object):
             self.population.append(s)
         self.population.sort(key = lambda x: x.obj_f, reverse = False)
         print('\t create population done...')
+        
+        self.currentBestSolution = copy.deepcopy(self.population[0])
         
         while not self._checkStopCondition():
             self.Step()
@@ -266,7 +269,12 @@ class GeneticAlgorithm(object):
     
     def _evalPopulation(self):
         print('...evalPopulation started')
-        #pass
+        self.population.sort(key = lambda x: x.obj_f)
+        if self.population[0].obj_f < self.currentBestSolution.obj_f:
+            self.currentBestSolution = copy.deepcopy(self.population[0])
+            self.currentIterWithoutChange = 0
+        else:
+            self.currentIterWithoutChange += 1
         print('\t evalPopulation done...')
         
     def _checkStopCondition(self):
