@@ -5,57 +5,70 @@ from scipy import stats
 class Maximum(object):
     def __call__(self, sample):
         """
-        Compute maximum feature
+        Compute maximum feature for an array of samples
         @param self:
-        @param sample: 1-dim numpy.array
-        @return: maximum value from sample
+        @param sample: m x n numpy array, m -- number of samples, n -- length of each sample
+        @return: m x 1 numpy array containing maximum value for each sample
         """
-        return np.max(sample)
+        return np.max(sample, 1).reshape(-1, 1)
 
 
 class Minimum(object):
     def __call__(self, sample):
         """
-        Computes minimum feature
+        Computes minimum feature for an array of samples
         @param self:
-        @param sample: 1-dim numpy.array
-        @return: minimum value from sample
+        @param sample: m x n numpy array, m -- number of samples, n -- length of each sample
+        @return: m x 1 numpy array containing minimum value for each sample
         """
-        return np.min(sample)
+        return np.min(sample, 1).reshape(-1, 1)
 
 
 class Mean(object):
     def __call__(self, sample):
         """
-        Computes mean feature
+        Computes mean feature for an array of samples
         @param self:
-        @param sample: 1-dim numpy.array
-        @return: mean value for values from sample
+        @param sample: m x n numpy array, m -- number of samples, n -- length of each sample
+        @return: m x 1 numpy array containing mean value for each sample
         """
-        return np.mean(sample)
+        return np.mean(sample, 1).reshape(-1, 1)
 
 
 class StdDeviation(object):
     def __call__(self, sample):
         """
-        Computes standard deviation feature
+        Computes standard deviation feature for an array of samples
         @param self:
-        @param sample: 1-dim numpy.array
-        @return: std deviation for values from sample
+        @param sample: m x n numpy array, m -- number of samples, n -- length of each sample
+        @return: m x 1 numpy array containing std deviation for each sample
         """
-        return np.std(sample)
+        return np.std(sample, 1).reshape(-1, 1)
 
 
 class LinearRegressionCoef(object):
     def __call__(self, sample):
         """
-        Computes linear regression coefficient
+        Computes linear regression coefficient for an array of samples.
+        see https://en.wikipedia.org/wiki/Simple_linear_regression
         @param self:
-        @param sample: 1-dim numpy.array
-        @return: linear regression coefficient
+        @param sample: m x n numpy array, m -- number of samples, n -- length of each sample
+        @return: m x 1 numpy array containing linear regression coefficient for each sample
         """
-        slope, intercept, r_value, p_value, std_err = stats.linregress(np.arange(len(sample)), sample)
-        return slope
+        
+        n = sample.shape[1]
+        
+        x = np.arange(1.0, n + 1)
+        x_mean = (n + 1) / 2.0
+        x_variation = n * (n * n - 1) / 12.0
+        
+        y_mean = np.mean(sample, 1).reshape(-1, 1)
+        
+        value = (x - x_mean) * (sample - y_mean)
+        
+        slope = np.sum(value, 1) / x_variation
+        
+        return slope.reshape(-1, 1)
 
 
 class FFTCoef(object):
@@ -68,10 +81,10 @@ class FFTCoef(object):
 
     def __call__(self, sample):
         """
-        Computes first self.n_coef fft coefficients
+        Computes first self.n_coef fft coefficients for an array of samples
         @param self:
-        @param sample: 1-dim numpy.array
-        @return: list with self.n_coef fft coefficients
+        @param sample: m x n numpy array, m -- number of samples, n -- length of each sample
+        @return: m x self.n_coef numpy array containing fft coefficients for each sample
         """
-        fft_coef = np.abs(np.fft.rfft(sample))
-        return list(fft_coef[:self.n_coef])
+        fft_coef = np.abs(np.fft.rfft(sample, axis=1))
+        return fft_coef[:, :self.n_coef]

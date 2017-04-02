@@ -3,10 +3,12 @@ from scipy import optimize
 from axiomatic.base import AbstractAxiom, Axiom, DummyAxiom
 from scipy.ndimage import maximum_filter
 import numpy as np
+import pandas as pd
 import random
 from sklearn.cluster import KMeans
 
 from axiomatic import settings
+from axiomatic.utils import time_series_embedding
 
 
 class DummyAxiomTrainingStage(object):
@@ -123,7 +125,6 @@ class FrequencyAxiomTrainingStage:
         artifacts["axioms"] = result
         return artifacts
 
-
 class ClusteringAxiom(object):
     def __init__(self, model, feature_extractor, dim, cluster_id):
         """
@@ -144,30 +145,23 @@ class ClusteringAxiom(object):
         """
         ans = np.full(ts.shape[0], False, dtype=bool)  # axiom can be satisfied only for specific dimension
 
-        # specific dimension of time series
-        dim_ts = ts.values[:, self.dim]
+        # specific dimension of time series as pd.Series object
+        dim_ts = ts[ts.columns[self.dim]]
 
         sample_length = self.feature_extractor.sample_length
         features = self.feature_extractor.features
 
         # axiom can be satisfied only in central points of time series:
         # from first_part position to len(ts) - 1 - last_part position
-        first_part = sample_length / 2
-        last_part = sample_length - first_part
-
-        for i in range(first_part, len(dim_ts) - last_part):
-            sample_ts = dim_ts[i - first_part:i - first_part + sample_length]
-
-            computed_features_for_sample = []
-            for feature in features:
-                f = feature(sample_ts)
-                if isinstance(f, list):
-                    computed_features_for_sample.extend(f)
-                else:
-                    computed_features_for_sample.append(f)
-
-            x = np.array(computed_features_for_sample).reshape(1, -1)
-            ans[i] = (self.model.predict(x) == self.cluster_id)
+        left_nei = sample_length / 2
+        right_nei = sample_length - left_nei - 1
+        
+        dim_ts_embedding = time_series_embedding(dim_ts, left_nei, right_nei)
+                
+        feature_values_list = [feature(dim_ts_embedding.values) for feature in features]
+        feature_values = np.hstack(feature_values_list)
+        
+        ans[left_nei: -right_nei] = (self.model.predict(feature_values[left_nei: -right_nei, :]) == self.cluster_id)
 
         return ans
 
@@ -206,17 +200,9 @@ class FeatureExtractionStage(object):
         @param sample_list: list of numpy.array containing 1-dim time series
         @return: 2-dim numpy.array with computed features for every sample
         """
-        sample_features = []
-        for sample in sample_list:
-            computed_features = []
-            for feature in self.features:
-                f = feature(sample)
-                if isinstance(f, list):
-                    computed_features.extend(f)
-                else:
-                    computed_features.append(f)
-            sample_features.append(computed_features)
-        return np.array(sample_features)
+        sample_array = np.array(sample_list)
+        feature_values_list = [feature(sample_array) for feature in self.features]
+        return np.hstack(feature_values_list)
 
     def prepare_features(self, ts_list):
         """
