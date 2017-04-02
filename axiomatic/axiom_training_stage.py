@@ -166,7 +166,7 @@ class ClusteringAxiom(object):
                 else:
                     computed_features_for_sample.append(f)
 
-            x = np.array(computed_features_for_sample)
+            x = np.array(computed_features_for_sample).reshape(1, -1)
             ans[i] = (self.model.predict(x) == self.cluster_id)
 
         return ans
