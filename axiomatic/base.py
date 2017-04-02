@@ -102,22 +102,26 @@ class AbstractAxiom(object):
             res = res + (slice(left, right, step), )
         return res
 
-    def run(self, ts):
-        res = np.zeros(len(ts))
+    def run(self, ts, cache):
+#        res = np.zeros(len(ts))
 
-        for i in range(len(ts)):
-            res[i] = self.concrete_axiom.run_one(ts[ts.columns[self.dim]].values, i)
+        res = self.concrete_axiom.run(ts[ts.columns[self.dim]].values, cache)
+
+#        for i in range(len(ts)):
+#            res[i] = self.concrete_axiom.run_one(ts[ts.columns[self.dim]].values, i)
         
         if self.sign == 1:
             return res
         return np.logical_not(res)
     
-    def static_run_one(self, params, data):
+    def static_run_one(self, params, data, cache):
         freq = 0
+        i = 0
 
         for ts in data:
             now = AbstractAxiom(self.sign, self.dim, self.axiom, params)
-            freq += sum(now.run(ts))
+            freq += sum(now.run(ts, cache[i]))
+            i += 1
         return freq / len(data)
 
     def static_run(self, params, *data):
@@ -125,8 +129,8 @@ class AbstractAxiom(object):
         params[0] = int(params[0])
         params[1] = int(params[1])
 
-        data_abnorm, data_norm = data
-        return self.static_run_one(params, data_abnorm) / (1 + self.static_run_one(params, data_norm))
+        data_abnorm, data_norm, cache_abnorm, cache_norm = data
+        return self.static_run_one(params, data_abnorm, cache_abnorm) / (1 + self.static_run_one(params, data_norm, cache_norm))
 
 class TrainingPipeline(object):
     """

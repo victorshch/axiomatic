@@ -1,11 +1,22 @@
 import numpy as np
 
+def form_matrix(ts, left=2, right=2, default_elem=0):
+    n = len(ts)
+    res = np.empty(shape=(left + right + 1, n))
+    roll = np.append(ts, np.full(right + left, default_elem), axis=0)
+
+    for i in range(-left, right + 1):
+        res[i + left] = np.roll(roll, -i)[:n]
+#   res = np.array([np.append(np.append(np.full(max(-i, 0), default_elem), ts[max(i, 0): min(n, n + i)]),
+#          np.full(max(i, 0), default_elem)) for i in range(-left, right + 1)])
+    return res
+
 class MinMaxAxiom(object):
     num_params = 4
+    cnt = 0
 
     def __init__(self, params):
         self.l, self.r, self.pmin, self.pmax = params
-        self.r += self.l
         self.pmax += self.pmin
 
     def bounds(data):
@@ -16,9 +27,17 @@ class MinMaxAxiom(object):
             worst = min(worst, min(ts))
         return ((worst, best), (0, best - worst))
     
-    def run_one(self, ts, ind):
-        seg = ts[max(0, ind - self.l): min(len(ts), ind + self.r + 1)]
-        return self.pmin <= min(seg) and max(seg) <= self.pmax
+    def run(self, ts, cache):
+        matrix1 = form_matrix(ts, self.l, self.r, min(ts)) #cache
+        matrix2 = form_matrix(ts, self.l, self.r, max(ts)) #cache
+        res = np.logical_and(np.less_equal(matrix1.max(0), self.pmax), np.greater_equal(matrix2.min(0), self.pmin))
+#        n = len(ts)
+#        res = np.zeros(n)
+
+#        for i in range(n):
+#            seg = ts[max(0, i - self.l): min(n, i + self.r + 1)]
+#            res[i] = self.pmin <= min(seg) and max(seg) <= self.pmax
+        return res
 
 
 class MaxAxiom(object):
@@ -26,7 +45,6 @@ class MaxAxiom(object):
 
     def __init__(self, params):
         self.l, self.r = params
-        self.r += self.l
 
     def bounds(data):
         return tuple()
@@ -41,7 +59,6 @@ class MinAxiom(object):
 
     def __init__(self, params):
         self.l, self.r = params
-        self.r += self.l
 
     def bounds(data):
         return tuple()
@@ -56,7 +73,6 @@ class ChangeAxiom(object):
 
     def __init__(self, params):
         self.l, self.r, self.pmin, self.pmax = params
-        self.r += self.l
         self.pmax += self.pmin
 
     def bounds(data):
@@ -78,7 +94,6 @@ class IntegralAxiom(object):
 
     def __init__(self, params):
         self.l, self.r, self.pmin, self.pmax = params
-        self.r += self.l
         self.pmax += self.pmin
 
     def bounds(data):
@@ -101,7 +116,6 @@ class RelativeChangeAxiom(object):
 
     def __init__(self, params):
         self.l, self.r, self.pmin, self.pmax = params
-        self.r += self.l
         self.pmax += self.pmin
 
     def bounds(data):
@@ -126,7 +140,6 @@ class FirstDiffAxiom(object):
 
     def __init__(self, params):
         self.l, self.r, self.pmin, self.pmax = params
-        self.r += self.l
         self.pmax += self.pmin
 
     def bounds(data):
@@ -149,7 +162,6 @@ class SecondDiffAxiom(object):
 
     def __init__(self, params):
         self.l, self.r, self.pmin, self.pmax = params
-        self.r += self.l
         self.pmax += self.pmin
 
     def bounds(data):

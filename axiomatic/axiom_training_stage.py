@@ -11,6 +11,8 @@ from axiomatic import settings
 from axiomatic.utils import time_series_embedding
 
 
+from axiomatic.base import form_matrix
+
 class DummyAxiomTrainingStage(object):
     """
     This training stage creates dummy axioms for every abnormal behavior class
@@ -35,11 +37,28 @@ class FrequencyECTrainingStage(object):
         self.num_axioms = config['num_axioms']
         self.axiom_list = config['axiom_list']
 
+    def form_dict(self, data_set):
+        res = dict()
+        maxdim = data_set["train"]["normal"][0].shape[1]
+
+        for name in data_set["train"]:
+            res[name] = []
+
+            for dim in range(maxdim):
+                res[name].append([])
+                now = data_set["train"][name]
+
+                for i in range(len(now)):
+                    res[name][dim].append(form_matrix(now[i][now[i].columns[dim]].values))
+        return res
+
     def train(self, data_set, artifacts):
         normal = data_set["train"]["normal"]
         maxdim = data_set["train"]["normal"][0].shape[1]
         artifacts = dict()
         artifacts["axioms"] = dict()
+
+        cache = self.form_dict(data_set)
 
         cnt = -1
 
@@ -56,11 +75,11 @@ class FrequencyECTrainingStage(object):
                     for axiom in self.axiom_list:
                         for sign in [-1, 1]:
                             abstract_axiom = AbstractAxiom(sign, dim, axiom)
-                            rranges = (slice(0, len(normal[0]), 1), slice(0, self.max_window, 1))
+                            rranges = (slice(0, self.max_window + 1, 1), slice(0, self.max_window + 1, 1))
                             rranges = rranges + abstract_axiom.bounds(data_set["train"][name] + normal, self.num_part)
 
                             resbrute = optimize.brute(abstract_axiom.static_run, rranges,
-                                args=(data_set["train"][name], normal), full_output=True, finish=None)
+                                args=(data_set["train"][name], normal, cache[name][dim], cache["normal"][dim]), full_output=True, finish=None)
                             
                             res = (resbrute[3] == maximum_filter(resbrute[3], size=3)).ravel()
                             
@@ -91,6 +110,7 @@ class FrequencyAxiomTrainingStage:
         self.max_depth = config['max_depth']
 
     def train(self, data_set, artifacts):
+        exit()
         axioms = artifacts["axioms"]
         result = dict()
         normal = data_set["train"]["normal"]
