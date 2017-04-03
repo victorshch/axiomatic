@@ -37,7 +37,7 @@ class GeneticAlgorithm(object):
         """
         @param config: config for genetic algorithm, should be dict (e.g. 
         {'genetic_algorithms_params': {'n_individuals': 15, 'mutation_prob_init': 0.7, 'crossover_prob_init': 0.7}, 
-         'stop_criterion': {'maxIter': 1000, 'maxIterWithoutChange': 30, 'minObjF': None},
+         'stop_criterion': {'maxIter': 1000, 'maxIterWithoutChange': 30, 'minObjF': -1},
          'objective_function_algorithm': 'knn',
          'axioms_set': artifacts['axioms']['_clusters'],
          'train_data': dataset['train'], 'test_data': dataset['test']})
@@ -91,7 +91,7 @@ class GeneticAlgorithm(object):
             print('Iteration =', self.currentIter ,'; Best score =', '%.10f' % self.currentBestSolution.obj_f, self.currentBestSolution)
             
         print("\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/")
-        print("Best solution (found on", self.currentIter, "iteration):", self.currentSolution)
+        print("Best solution (found on", self.currentIter, "iteration):", self.currentBestSolution)
         print("--------------------------------------")
         #Algorithm.time = time.time() - Algorithm.time
         #self.stat.AddExecution(Execution(copy.deepcopy(self.currentSolution), self.currentIter, Algorithm.time, Algorithm.timecounts, Algorithm.simcounts))
@@ -100,6 +100,7 @@ class GeneticAlgorithm(object):
     def Clear(self):
         print('...clear started')
         self.currentSolution = None
+        self.currentBestSolution = None
         self.currentIter = 0
         self.currentIterWithoutChange = 0
         self.population = []
@@ -278,19 +279,19 @@ class GeneticAlgorithm(object):
         print('\t evalPopulation done...')
         
     def _checkStopCondition(self):
-        if self.config.stop_criterion.maxIter != -1:
-            if self.currentSolution != None and self.currentIter >= self.config.stop_criterion.maxIter:
-                self.currentSolution.Update()
+        if self.config['stop_criterion']['maxIter'] != -1:
+            if self.currentBestSolution != None and self.currentIter >= self.config['stop_criterion']['maxIter']:
+                #self.currentSolution.Update()
                 return True
 
-        if self.config.stop_criterion.maxIterWithoutChange != -1:
-            if self.currentSolution != None and self.currentIterWithoutChange >= self.config.stop_criterion.maxIterWithoutChange:
-                self.currentSolution.Update()
+        if self.config['stop_criterion']['maxIterWithoutChange'] != -1:
+            if self.currentBestSolution != None and self.currentIterWithoutChange >= self.config['stop_criterion']['maxIterWithoutChange']:
+                #self.currentSolution.Update()
                 return True
                 
-        if self.config.stop_criterion.minObjF != -1:
-            if self.currentSolution != None and self.currentSolution.rel >= self.config.stop_criterion.minObjF:
-                self.currentSolution.Update()
+        if self.config['stop_criterion']['minObjF'] != -1:
+            if self.currentBestSolution != None and self.currentBestSolution.obj_f >= self.config['stop_criterion']['minObjF']:
+                #self.currentSolution.Update()
                 return True
         
         return False
