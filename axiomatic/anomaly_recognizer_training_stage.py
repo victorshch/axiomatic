@@ -1,4 +1,5 @@
 from base import AxiomSystem
+import numpy as np
 import random, copy, time
 
 class AxiomsMarking(object):
@@ -107,7 +108,7 @@ class GeneticAlgorithm(object):
         print('\t clear done...')
         
     def _ts_transform(self, axioms):
-        #print('...ts_transform started')
+        print('...ts_transform started')
         axiom_system = AxiomSystem(axioms)
     
         train_normal_data_marked = []
@@ -127,6 +128,7 @@ class GeneticAlgorithm(object):
             
         data = {'train': train_normal_data_marked, 'normal': test_normal_data_marked, 'anomaly': test_anomaly_data_marked}
         
+        print('\t ts_transform done...')
         return data
         
     def _LCS(self, s1, s2):
@@ -142,6 +144,8 @@ class GeneticAlgorithm(object):
                         x_longest = x
                 else:
                     m[x][y] = 0
+        
+        #print('\t LCS done...')
         return len(s1[x_longest - longest: x_longest])
         
     def _knn_objective_function(self, data, k=5):
@@ -188,25 +192,30 @@ class GeneticAlgorithm(object):
                 
                 if mutation_type == 0:
                     # _mutate_0: random shuffle
-                    s.axioms = random.shuffle(s.axioms)
+                    print('_mutate_0')
+                    random.shuffle(s.axioms)
                 elif mutation_type == 1:       
                     # _mutate_1: swap two random elements
+                    print('_mutate_1')
                     if len(s.axioms) > 1:
                         i, j = random.sample(range(len(s.axioms)), 2)
                         s.axioms[i], s.axioms[j] = s.axioms[j], s.axioms[i]
                 elif mutation_type == 2:
                     # _mutate_2: insert random element in random place  
+                    print('_mutate_2')
                     diff_set = set(self.config['axioms_set']).difference(set(s.axioms))
                     if diff_set != set():
                         item = random.choice(list(diff_set))
                         s.axioms.insert(random.randrange(len(s.axioms)+1), item)
                 elif mutation_type == 3:
                     # _mutate_3: delete random element
+                    print('_mutate_3')
                     if len(s.axioms) > 1:
                         i = random.randint(0, len(s.axioms)-1)
                         s.axioms.pop(i)
                 else:
                     # _mutate_4: random change random element
+                    print('_mutate_4')
                     diff_set = set(self.config['axioms_set']).difference(set(s.axioms))
                     if diff_set != set():
                         i = random.randint(0, len(s.axioms)-1)
@@ -229,6 +238,9 @@ class GeneticAlgorithm(object):
                 '''
                 ##############################################################################
                 
+            else:
+                print('no mutation')
+            
             c += 1
         
         print('\t mutate done...')
@@ -254,10 +266,13 @@ class GeneticAlgorithm(object):
                 return axioms
             
     def _roulette(self, population):
-        return [_weighted_random_choice(population) for i in range(self.config['genetic_algorithms_params']['n_individuals'])]
+        return [self._weighted_random_choice(population) for i in range(self.config['genetic_algorithms_params']['n_individuals'])]
 
     def _select(self):
         print('...select started')
+        if len(self.population) < 2:
+            print('\t select done...')
+            return
         newPopulation = []
         self.population.sort(key = lambda x: x.obj_f)
         eliteCount = int(round(self.elitism * self.config['genetic_algorithms_params']['n_individuals']))
