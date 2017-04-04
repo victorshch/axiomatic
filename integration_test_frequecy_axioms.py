@@ -9,7 +9,7 @@ from axiomatic.base import RelativeChangeAxiom, FirstDiffAxiom, SecondDiffAxiom,
 from axiomatic.axiom_training_stage import FrequencyECTrainingStage, FrequencyAxiomTrainingStage
 from axiomatic.recognizer_training_stage import DummyRecognizerTrainingStage
 from axiomatic.objective_function import ObjectiveFunction
-from axiomatic.abnormal_behavior_recognizer import AbnormalBehaviorRecognizer
+#from axiomatic.abnormal_behavior_recognizer import AbnormalBehaviorRecognizer
 
 with open('datasets/debug_dataset.pickle', 'rb') as f:
     dataset = pickle.load(f, encoding='latin1')
@@ -21,7 +21,7 @@ for fold in dataset:
         for i in range(len(dataset[fold][name])):
             dataset[fold][name][i] = dataset[fold][name][i]
 
-axiom_list = [MinMaxAxiom] #, MaxAxiom, MinAxiom, ChangeAxiom, IntegralAxiom, RelativeChangeAxiom, FirstDiffAxiom, SecondDiffAxiom]
+axiom_list = [ChangeAxiom] # MinMaxAxiom, MaxAxiom, MinAxiom, ChangeAxiom, IntegralAxiom, RelativeChangeAxiom, FirstDiffAxiom, SecondDiffAxiom]
 frequency_ec_stage = FrequencyECTrainingStage({'num_part': 2, 'max_window': 2, 'num_axioms': 5, 'axiom_list': axiom_list})
 frequency_axiom_stage = FrequencyAxiomTrainingStage({'num_axioms': 10, 'max_depth': 5, 'num_step_axioms': 10})
 
@@ -33,6 +33,7 @@ artifacts = training_pipeline.train(dataset)
 
 print("Artifacts after training: ", artifacts)
 
+'''
 recognizer = AbnormalBehaviorRecognizer(artifacts['axiom_system'], artifacts['abn_models'],
                                         dict(bound=0.1,maxdelta=0.5))
 
@@ -41,4 +42,4 @@ obj_fn = ObjectiveFunction(1, 20)
 obj_fn_value = obj_fn.calculate(recognizer, dataset['test'])
 
 print("Recognizer objective function: ", obj_fn_value)
-
+'''

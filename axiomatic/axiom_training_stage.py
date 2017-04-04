@@ -5,7 +5,7 @@ from scipy.ndimage import maximum_filter
 import numpy as np
 import pandas as pd
 import random
-from sklearn.cluster import KMeans
+#from sklearn.cluster import KMeans
 
 from axiomatic import settings
 from axiomatic.utils import time_series_embedding
