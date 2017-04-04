@@ -55,9 +55,9 @@ class GeneticAlgorithm(object):
         self.currentIterWithoutChange = 0
         self.population = []
         self.mutPercent = 1.0
+        self.crossPercent = 1.0
         self.selective_pressure = 1.5
         self.elitism = 0.05
-        #self.crossPercent = 1.0
         #self.mutProb = 0.7 #[random.uniform(0.1, 0.9) for j in range(0, self.algconf.popNum)]
         #self.crossProb = 0.7 #[random.uniform(0.1, 0.9) for j in range(0, self.algconf.popNum)]
         print('\t init done...')
@@ -247,7 +247,72 @@ class GeneticAlgorithm(object):
         
     def _crossover(self):
         print('...crossover started')
-        #pass
+        
+        if len(self.population) < 2:
+            print('\t crossover done...')
+            return
+            
+        new_pop = []
+        notCrossNum = int((1.0 - self.crossPercent) * len(self.population))
+        #if self.corrMode == 10:
+        #    old_popul = self.population
+        for i in range(notCrossNum):
+            new_pop.append(copy.deepcopy(self.population[i]))
+        for i in range(int(len(self.population)/2)):
+            p1, p2 = random.sample(range(len(self.population)), 2)
+            parents = [self.population[p1], self.population[p2]]
+            rr = random.random()
+            
+            if rr <= self.config['genetic_algorithms_params']['crossover_prob_init']:
+            #if rr <= self.crossProb[p1] and rr <= self.crossProb[p2]: # adaptive
+                # parents = random.sample(self.population,  2)
+                # k = random.randint(1,Module.conf.modNum-1)
+                #old0 = copy.deepcopy(parents[0]) # adaptive
+                #old1 = copy.deepcopy(parents[1]) # adaptive
+                
+                min_l, max_l = min(len(parents[0].axioms), len(parents[1].axioms)), max(len(parents[0].axioms), len(parents[1].axioms))
+                k = random.randrange(min_l, max_l + 1)
+                
+                union_set = set(parents[0].axioms).union(set(parents[1].axioms))
+                child1 = random.sample(list(union_set), k)
+                child2 = random.sample(list(union_set), k)
+                
+                parents[0].axioms = child1
+                parents[1].axioms = child2
+                
+                value = self._knn_objective_function(self._ts_transform(parents[0].axioms))
+                parents[0].Update(value)
+                value = self._knn_objective_function(self._ts_transform(parents[1].axioms))
+                parents[1].Update(value)
+                
+                '''
+                #######################################################################################
+                
+                if self.corrMode == 10:
+                    self.corrPar2 = count_variance(old_popul)
+                    self.corrPar1 = count_variance(self.population)
+                    
+                if self.corrMode == 5:
+                    self.corrPar2 = count_avg(self.population)
+                    adaptate(self.crossProb[p1], parents[0], self.corrPar2, max([j.rel for j in self.population]), self.corrPar1)
+                    self.corrPar2 = count_avg(self.population)
+                    adaptate(self.crossProb[p2], parents[1], self.corrPar2, max([j.rel for j in self.population]), self.corrPar1)
+                else:
+                    adaptate(self.crossProb[p1], parents[0], old1, self.corrMode, self.corrPar1, self.corrPar2)
+                    adaptate(self.crossProb[p2], parents[1], old1, self.corrMode, self.corrPar1, self.corrPar2)
+                
+                #adaptate(self.crossProb[p1], parents[0], old0, self.corrMode, self.corrPar1, self.corrPar2) 
+                    
+                #adaptate(self.crossProb[p2], parents[1], old1, self.corrMode, self.corrPar1, self.corrPar2)
+                
+                #######################################################################################
+                '''
+                
+        self.population.sort(key = lambda x: x.obj_f, reverse = False)
+        new_pop += self.population[:len(self.population) - notCrossNum]
+        self.population = new_pop
+        self.population.sort(key = lambda x: x.obj_f, reverse = False)
+        
         print('\t crossover done...')
         
     def _linearRankFitness(self, population):
