@@ -23,19 +23,25 @@ def dtw_distances_from_matrix(D):
     
     for a in xrange(1, N):
         for b in xrange(1, Nmax):
-            # TODO optimize matrix indexing
-            diag = (D[a, b] + S[a - 1, b - 1]) * (R[a - 1, b - 1] + 1)
-            right = (D[a, b] + S[a, b - 1]) * (R[a, b - 1] - 1)
-            down = (D[a, b] + S[a - 1, b]) * (R[a - 1, b] + 1)
+            Dab = D[a, b]
+            Sa1b1 = S[a - 1, b - 1]
+            Ra1b1 = R[a - 1, b - 1]
+            Sab1 = S[a, b - 1]
+            Rab1 = R[a, b - 1]
+            Sa1b = S[a - 1, b]
+            Ra1b = R[a - 1, b]
+            diag = (Dab + Sa1b1) * (Ra1b1 + 1)
+            right = (Dab + Sab1) * (Rab1 - 1)
+            down = (Dab + Sa1b) * (Ra1b + 1)
             if down < diag and down < right:
-                S[a, b] = D[a, b] + S[a - 1, b]
-                R[a, b] = R[a - 1, b] + 1
+                S[a, b] = Dab + Sa1b
+                R[a, b] = Ra1b + 1
             elif diag <= down and diag <= right:
-                S[a, b] = D[a, b] + S[a - 1, b - 1]
-                R[a, b] = R[a - 1, b - 1] + 1
+                S[a, b] = Dab + Sa1b1
+                R[a, b] = Ra1b1 + 1
             elif right < diag and right <= down:
-                S[a, b] = D[a, b] + S[a, b - 1]
-                R[a, b] = R[a, b - 1] + 1
+                S[a, b] = Dab + Sab1
+                R[a, b] = Rab1 + 1
             else:
                 print "Warning: dtw_from_matrix() strange behavior"
     
