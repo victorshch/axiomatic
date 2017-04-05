@@ -39,6 +39,12 @@ class DummyAxiom(object):
         @return: bool numpy.array, containing True values on positions where axiom is satisfied
         """
         return np.ones(ts.shape[0])
+    
+    def __str__(self):
+        return "Dummy(" + str(id(self) % 1000) + ")"
+    
+    def __repr__(self):
+        return "Dummy(" + str(id(self) % 1000) + ")"
 
 class Axiom(object):
     def __init__(self, axiom = []):

@@ -9,10 +9,11 @@ from abnormal_behavior_recognizer import AbnormalBehaviorRecognizer, QuestionMar
 from objective_function import ObjectiveFunction
 
 def index_of(lst, a):
-    if not callable(a): a = lambda x: x == a
+    if not callable(a): f = lambda x: x == a
+    else: f = a
     for i, v in enumerate(lst):
-        if a(v): return i
-    return -1
+        if f(v): return i
+    return -3
 
 def last_index_of(lst, func):
     i = index_of(lst[::-1], func)
@@ -65,7 +66,10 @@ class Specimen(object):
         return [self.axiom_list[i] if i >= 0 else i for i in marking]
     
     def make_marking(self, axiom_list_with_numbers):
-        return [index_of(self.axiom_list, a) if not isinstance(a, int) else a for a in axiom_list_with_numbers]
+        return [(index_of(self.axiom_list, a) if not isinstance(a, int) else a) for a in axiom_list_with_numbers]
+    
+    def __repr__(self):
+        return "Specimen(axioms:" + repr(self.axiom_list) + ", abn_models" + repr(self.abn_models) + ")";
 
 class MutationActions(object):
     ReplaceWithOwn = 0
@@ -127,13 +131,24 @@ class Crossover(object):
         pass
 
     def one_point_crossover(self, l1, l2):
-        p1 = np.random.randint(len(l1))
-        p2 = np.random.randint(len(l2))
+        p1 = np.random.randint(len(l1) + 1)
+        
+        # we need to choose min and max points to exclude empty models
+        min_point_2 = 0 if p1 < len(l1) else 1
+        max_point_2 = len(l2) if p1 > 0 else len(l2) - 1
+        
+        p2 = np.random.randint(min_point_2, max_point_2 + 1)
+        
+        result = (l1[:p1], l2[p2:]), (l2[:p2], l1[p1:])
+        #print "One-point crossover for ", l1, l2, "points:", p1, p2, " result:", result
 
-        return (l1[:p1], l2[p2:]), (l2[:p2], l1[p1:])
+        return result
     
     def crossover(self, s1, s2):
         class_to_mutate = np.random.choice(s1.abn_models.keys())
+        #print "Class to mutate: ", class_to_mutate
+        
+        #print "Parents: ", s1, s2
         
         offspring1 = copy.copy(s1)
         offspring2 = copy.copy(s2)
@@ -148,14 +163,18 @@ class Crossover(object):
         
         offspring1_m, offspring2_m = self.one_point_crossover(m1_axioms, m2_axioms)
         
-        for a in offspring1_m[1]: offspring1.check_add_axiom(a, len(offspring1.axiom_list))
-        for a in offspring2_m[0]: offspring2.check_add_axiom(a, len(offspring2.axiom_list))
+        for a in offspring1_m[1]: 
+            if not isinstance(a, int): offspring1.check_add_axiom(a, len(offspring1.axiom_list))
+        for a in offspring2_m[1]: 
+            if not isinstance(a, int): offspring2.check_add_axiom(a, len(offspring2.axiom_list))
         
         offspring1.abn_models[class_to_mutate] = offspring1.make_marking(offspring1_m[0] + offspring1_m[1])
         offspring2.abn_models[class_to_mutate] = offspring2.make_marking(offspring2_m[0] + offspring2_m[1])
         
         #for a in offspring1_m[0]: offspring1.check_remove_axiom(a)
         #for a in offspring2_m[1]: offspring2.check_remove_axiom(a)
+        
+        #print "Offsprings: ", offspring1, offspring2
         
         return offspring1, offspring2
 
@@ -211,6 +230,7 @@ class GeneticRecognizerTrainingStage(object):
         #for i, specimen in enumerate(population):
             #if specimen.objective is not None: continue
             #specimen.objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)[0];
+        return result
 
     def linearRankFitness(self, population):
         a = 2.0 * (self.selective_pressure - 1) / (len(population) - 1)
@@ -232,6 +252,7 @@ class GeneticRecognizerTrainingStage(object):
 
     def train(self, data_set, artifacts):
         axioms = [a for cl in artifacts['axioms'].keys() for a in artifacts['axioms'][cl] ]
+        #print "Initial axioms: ", axioms
         train_data_set = data_set['train']
         data_set = data_set['test']
                 
@@ -251,10 +272,7 @@ class GeneticRecognizerTrainingStage(object):
         
         for i in xrange(self.iteration_count):
             print "Iteration ", i + 1, "of", self.iteration_count
-            print "Mutating..."
-            print population
             mutated = [mutation.mutate(copy.copy(specimen), axioms) for specimen in population]
-            print "Mutated", mutated
             population.extend(mutated)
             offspring = []
             print "Crossing..."

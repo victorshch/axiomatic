@@ -23,7 +23,7 @@ class DummyAxiomTrainingStage(object):
         artifacts['axioms'] = {}
         for cl in data_set['train'].keys():
             if cl == 'normal': continue
-            artifacts['axioms'][cl] = [DummyAxiom()] * self.dummy_axiom_count
+            artifacts['axioms'][cl] = [DummyAxiom() for i in xrange(self.dummy_axiom_count)]
         
         return artifacts
 
