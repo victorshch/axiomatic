@@ -9,9 +9,9 @@ def form_matrix(ts, left, right):
         res[i + left] = np.roll(roll, -i)[:n]
     return res
 
+
 class MinMaxAxiom(object):
     num_params = 4
-    cnt = 0
 
     def __init__(self, params):
         self.l, self.r, self.pmin, self.pmax = params
