@@ -17,7 +17,8 @@ class MinMaxAxiom(object):
         self.l, self.r, self.pmin, self.pmax = params
         self.pmax += self.pmin
 
-    def bounds(data):
+    @classmethod
+    def bounds(self, data):
         best, worst = max(data[0]), min(data[0])
 
         for ts in data:
@@ -36,7 +37,8 @@ class MaxAxiom(object):
     def __init__(self, params):
         self.l, self.r = params
 
-    def bounds(data):
+    @classmethod
+    def bounds(self, data):
         return tuple()
     
     def run(self, ts, cache):
@@ -49,8 +51,9 @@ class MinAxiom(object):
 
     def __init__(self, params):
         self.l, self.r = params
-
-    def bounds(data):
+    
+    @classmethod
+    def bounds(self, data):
         return tuple()
     
     def run(self, ts, cache):
@@ -65,7 +68,8 @@ class ChangeAxiom(object):
         self.l, self.r, self.pmin, self.pmax = params
         self.pmax += self.pmin
 
-    def bounds(data):
+    @classmethod
+    def bounds(self, data):
         best = max(abs(data[0]))
 
         for ts in data:
@@ -86,7 +90,8 @@ class IntegralAxiom(object):
         self.l, self.r, self.pmin, self.pmax = params
         self.pmax += self.pmin
 
-    def bounds(data):
+    @classmethod
+    def bounds(self, data):
         bestsum = sum(data[0])
         worstsum = sum(data[0])
 
@@ -108,7 +113,8 @@ class RelativeChangeAxiom(object):
         self.l, self.r, self.pmin, self.pmax = params
         self.pmax += self.pmin
 
-    def bounds(data):
+    @classmethod
+    def bounds(self, data):
         best = max(data[0])
         worst = min(data[0])
 
@@ -133,7 +139,8 @@ class FirstDiffAxiom(object):
         self.l, self.r, self.pmin, self.pmax = params
         self.pmax += self.pmin
 
-    def bounds(data):
+    @classmethod
+    def bounds(self, data):
         best = max(data[0])
         worst = min(data[0])
 
@@ -155,7 +162,8 @@ class SecondDiffAxiom(object):
         self.l, self.r, self.pmin, self.pmax = params
         self.pmax += self.pmin
 
-    def bounds(data):
+    @classmethod
+    def bounds(self, data):
         best = max(data[0])
         worst = min(data[0])
 

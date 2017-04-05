@@ -12,7 +12,7 @@ from axiomatic.objective_function import ObjectiveFunction
 from axiomatic.abnormal_behavior_recognizer import AbnormalBehaviorRecognizer
 
 with open('datasets/debug_dataset.pickle', 'rb') as f:
-    dataset = pickle.load(f, encoding='latin1')
+    dataset = pickle.load(f)
 
 axiom_list = [MinMaxAxiom, MaxAxiom, MinAxiom, ChangeAxiom, IntegralAxiom, RelativeChangeAxiom, FirstDiffAxiom, SecondDiffAxiom]
 frequency_ec_stage = FrequencyECTrainingStage({'num_part': 5, 'left_window': 2, 'right_window': 2, 'num_axioms': 10, 'axiom_list': axiom_list, 'enable_cache': True})
