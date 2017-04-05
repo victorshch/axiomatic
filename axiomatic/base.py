@@ -44,30 +44,30 @@ class Axiom(object):
     def __init__(self, axiom = []):
         self.dnf = [] if axiom == [] else [[axiom]]
 
-    def run(self, ts):
+    def run(self, ts, cache = []):
         res = np.zeros(len(ts))
 
         for kf in self.dnf:
             now = np.ones(len(ts))
 
             for axiom in kf:
-                now = np.logical_and(now, axiom.run(ts))
+                now = np.logical_and(now, axiom.run(ts, cache))
             res = np.logical_or(res, now)
         return res
 
-    def run_all(self, data_abnorm, data_norm):
+    def run_all(self, data_abnorm, data_norm, cache_abnorm, cache_norm):
         res = 0
 
-        for ts in data_abnorm:
-            res += sum(self.run(ts))
+        for i in range(len(data_abnorm)):
+            res += sum(self.run(data_abnorm[i], cache_abnorm[i]))
         res /= len(data_abnorm)
 
         freq = 0
 
-        for ts in data_norm:
-            freq += sum(self.run(ts))
+        for ts in range(len(data_norm)):
+            freq += sum(self.run(data_norm[i], cache_norm[i]))
         freq /= len(data_norm)
-        return res / (1 + freq)
+        return res / (0.000005 + freq)
 
     def logical_or(self, another):
         res = Axiom()
@@ -102,13 +102,8 @@ class AbstractAxiom(object):
             res = res + (slice(left, right, step), )
         return res
 
-    def run(self, ts, cache):
-#        res = np.zeros(len(ts))
-
-        res = self.concrete_axiom.run(ts[ts.columns[self.dim]].values, cache)
-
-#        for i in range(len(ts)):
-#            res[i] = self.concrete_axiom.run_one(ts[ts.columns[self.dim]].values, i)
+    def run(self, ts, cache = []):
+        res = self.concrete_axiom.run(ts[ts.columns[self.dim]].values, [] if len(cache) == 0 else cache[self.dim])
         
         if self.sign == 1:
             return res
@@ -116,20 +111,16 @@ class AbstractAxiom(object):
     
     def static_run_one(self, params, data, cache):
         freq = 0
-        i = 0
 
-        for ts in data:
+        for i in range(len(data)):
             now = AbstractAxiom(self.sign, self.dim, self.axiom, params)
-            freq += sum(now.run(ts, cache[i]))
-            i += 1
+            freq += sum(now.run(data[i], cache[i]))
         return freq / len(data)
 
     def static_run(self, params, *data):
         params = list(params)
-        params[0] = int(params[0])
-        params[1] = int(params[1])
-
-        data_abnorm, data_norm, cache_abnorm, cache_norm = data
+        data_abnorm, data_norm, left_window, right_window, cache_abnorm, cache_norm = data
+        params = [left_window, right_window] + params
         return self.static_run_one(params, data_abnorm, cache_abnorm) / (1 + self.static_run_one(params, data_norm, cache_norm))
 
 class TrainingPipeline(object):

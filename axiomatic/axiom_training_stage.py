@@ -33,23 +33,18 @@ class DummyAxiomTrainingStage(object):
 class FrequencyECTrainingStage(object):
     def __init__(self, config):
         self.num_part = config['num_part']
-        self.max_window = config['max_window']
+        self.left_window = config['left_window']
+        self.right_window = config['right_window']
         self.num_axioms = config['num_axioms']
         self.axiom_list = config['axiom_list']
+        self.enable_cache = config['enable_cache']
 
     def form_dict(self, data_set):
         res = dict()
         maxdim = data_set["train"]["normal"][0].shape[1]
 
         for name in data_set["train"]:
-            res[name] = []
-
-            for dim in range(maxdim):
-                res[name].append([])
-                now = data_set["train"][name]
-
-                for i in range(len(now)):
-                    res[name][dim].append(form_matrix(now[i][now[i].columns[dim]].values))
+            res[name] = [[[] if not self.enable_cache else form_matrix(ts[dim], self.left_window, self.right_window) for dim in ts.columns] for ts in data_set["train"][name]]
         return res
 
     def train(self, data_set, artifacts):
@@ -59,11 +54,7 @@ class FrequencyECTrainingStage(object):
         artifacts["axioms"] = dict()
 
         cache = self.form_dict(data_set)
-
-        cnt = -1
-
-        for name in data_set["train"]:
-            cnt += 1
+        artifacts["cache"] = cache
 
         for name in data_set["train"]:
             if name != "normal":
@@ -75,16 +66,15 @@ class FrequencyECTrainingStage(object):
                     for axiom in self.axiom_list:
                         for sign in [-1, 1]:
                             abstract_axiom = AbstractAxiom(sign, dim, axiom)
-                            rranges = (slice(0, self.max_window + 1, 1), slice(0, self.max_window + 1, 1))
-                            rranges = rranges + abstract_axiom.bounds(data_set["train"][name] + normal, self.num_part)
+                            rranges = abstract_axiom.bounds(data_set["train"][name] + normal, self.num_part)
 
                             resbrute = optimize.brute(abstract_axiom.static_run, rranges,
-                                args=(data_set["train"][name], normal, cache[name][dim], cache["normal"][dim]), full_output=True, finish=None)
+                                args=(data_set["train"][name], normal, self.left_window, self.right_window, cache[name], cache["normal"]), full_output=True, finish=None)
                             
                             res = (resbrute[3] == maximum_filter(resbrute[3], size=3)).ravel()
                             
                             axioms = list(zip(res, resbrute[3].ravel(), *[param.ravel() for param in resbrute[2]]))
-                            axioms = [[param[0], param[1], int(param[2]), int(param[3])] + list(param[4:]) for param in axioms]
+                            axioms = [[param[0], param[1], self.left_window, self.right_window] + list(param[2:]) for param in axioms]
                             axioms.sort(reverse=True)
 
                             high = sorted(res, reverse=True).index(False) if False in res else len(res)
@@ -110,15 +100,15 @@ class FrequencyAxiomTrainingStage:
         self.max_depth = config['max_depth']
 
     def train(self, data_set, artifacts):
-        exit()
+        cache = artifacts["cache"]
         axioms = artifacts["axioms"]
         result = dict()
         normal = data_set["train"]["normal"]
 
         for name in axioms:
             now = [Axiom(x) for x in axioms[name]]
-            nums = [x.run_all(data_set["train"][name], normal) for x in now]
-            
+            nums = [x.run_all(data_set["train"][name], normal, cache[name], cache["normal"]) for x in now]
+
             for i in range(self.max_depth):
                 add = []
 
@@ -126,13 +116,13 @@ class FrequencyAxiomTrainingStage:
                     for pos2 in range(pos1 + 1, len(now)):
                         axiom_or = now[pos1].logical_or(now[pos2])
                         axiom_and = now[pos1].logical_and(now[pos2])
-                        num_or = axiom_or.run_all(data_set["train"][name], normal)
-                        num_and = axiom_and.run_all(data_set["train"][name], normal)
+                        num_or = axiom_or.run_all(data_set["train"][name], normal, cache[name], cache["normal"])
+                        num_and = axiom_and.run_all(data_set["train"][name], normal, cache[name], cache["normal"])
 
                         if max(num_or, num_and) > min(nums[pos1], nums[pos2]):
                             add.append(axiom_or if num_or > num_and else axiom_and)
                 now += add
-                nums = [x.run_all(data_set["train"][name], normal) for x in now]
+                nums = [x.run_all(data_set["train"][name], normal, cache[name], cache["normal"]) for x in now]
                 res = sorted(list(zip(nums, now)), key=lambda x: x[0])[0: self.num_step_axioms]
 
                 now = [x[1] for x in res]
@@ -143,6 +133,7 @@ class FrequencyAxiomTrainingStage:
             result[name] = res
 
         artifacts["axioms"] = result
+        artifacts.pop("cache")
         return artifacts
 
 class ClusteringAxiom(object):
@@ -317,4 +308,17 @@ class KMeansClusteringAxiomStage(object):
 
         artifacts['axioms'] = {}
         artifacts['axioms']['_clusters'] = all_axioms
+        return artifacts
+
+
+class TrainingStage(object):
+    def __init__(self, stages):
+        self.stages = stages
+
+    def train(self, data_set, artifacts):
+        axioms = []
+
+        for stage, config in self.stages:
+            axioms += stage(config).train(data_set, artifacts.deep_copy())["axioms"]
+        artifacts["axioms"] = axioms
         return artifacts
