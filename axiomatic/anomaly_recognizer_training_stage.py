@@ -56,6 +56,8 @@ class GeneticAlgorithm(object):
         self.population = []
         self.mutPercent = 1.0
         self.crossPercent = 1.0
+        self.mutate_prob_matrix = [self.config['genetic_algorithms_params']['mutation_prob_init'] for i in range(self.config['genetic_algorithms_params']['n_individuals'])]
+        self.crossover_prob_matrix = [self.config['genetic_algorithms_params']['crossover_prob_init'] for i in range(self.config['genetic_algorithms_params']['n_individuals'])]
         self.selective_pressure = 1.5
         self.elitism = 0.05
         #self.mutProb = 0.7 #[random.uniform(0.1, 0.9) for j in range(0, self.algconf.popNum)]
@@ -185,10 +187,12 @@ class GeneticAlgorithm(object):
         #if self.corrMode == 10:
         #    old_popul = copy.deepcopy(self.population)
         for s in self.population[sp:]:   
-            if random.random() <= self.config['genetic_algorithms_params']['mutation_prob_init']: #mutProb[c]:
+            if random.random() <= self.mutate_prob_matrix[c]:
+            #if random.random() <= self.config['genetic_algorithms_params']['mutation_prob_init']: #mutProb[c]:
                 mutation_type = random.randint(0,4)
                 
                 #old = copy.deepcopy(s)
+                delta_old = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
                 
                 if mutation_type == 0:
                     # _mutate_0: random shuffle
@@ -225,6 +229,11 @@ class GeneticAlgorithm(object):
                 s.Update(value)
                 
                 ##############################################################################
+                
+                delta_new = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
+                
+                self.mutate_prob_matrix[c] *= delta_old / delta_new
+                
                 '''
                 if self.corrMode == 10:
                     self.corrPar1 = count_variance(old_popul)
@@ -263,12 +272,14 @@ class GeneticAlgorithm(object):
             parents = [self.population[p1], self.population[p2]]
             rr = random.random()
             
-            if rr <= self.config['genetic_algorithms_params']['crossover_prob_init']:
-            #if rr <= self.crossProb[p1] and rr <= self.crossProb[p2]: # adaptive
+            #if rr <= self.config['genetic_algorithms_params']['crossover_prob_init']:
+            if rr <= self.crossover_prob_matrix[p1] and rr <= self.crossover_prob_matrix[p2]: # adaptive
                 # parents = random.sample(self.population,  2)
                 # k = random.randint(1,Module.conf.modNum-1)
+                
                 #old0 = copy.deepcopy(parents[0]) # adaptive
                 #old1 = copy.deepcopy(parents[1]) # adaptive
+                delta_old = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
                 
                 min_l, max_l = min(len(parents[0].axioms), len(parents[1].axioms)), max(len(parents[0].axioms), len(parents[1].axioms))
                 k = random.randrange(min_l, max_l + 1)
@@ -285,9 +296,14 @@ class GeneticAlgorithm(object):
                 value = self._knn_objective_function(self._ts_transform(parents[1].axioms))
                 parents[1].Update(value)
                 
-                '''
                 #######################################################################################
                 
+                delta_new = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
+                
+                self.crossover_prob_matrix[p1] *= delta_new / delta_old
+                self.crossover_prob_matrix[p2] *= delta_new / delta_old
+                
+                '''
                 if self.corrMode == 10:
                     self.corrPar2 = count_variance(old_popul)
                     self.corrPar1 = count_variance(self.population)
@@ -305,8 +321,8 @@ class GeneticAlgorithm(object):
                     
                 #adaptate(self.crossProb[p2], parents[1], old1, self.corrMode, self.corrPar1, self.corrPar2)
                 
-                #######################################################################################
                 '''
+                #######################################################################################
                 
         self.population.sort(key = lambda x: x.obj_f, reverse = False)
         new_pop += self.population[:len(self.population) - notCrossNum]
