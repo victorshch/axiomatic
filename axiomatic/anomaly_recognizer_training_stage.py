@@ -87,6 +87,8 @@ class GeneticAlgorithm(object):
         self.population.sort(key = lambda x: x.obj_f, reverse = False)
         print('\t create population done...')
         
+        print('pop:', len(self.population))
+        
         self.currentBestSolution = copy.deepcopy(self.population[0])
         
         while not self._checkStopCondition():
@@ -261,6 +263,8 @@ class GeneticAlgorithm(object):
             print('\t crossover done...')
             return
             
+        print('pop:', len(self.population))
+            
         new_pop = []
         notCrossNum = int((1.0 - self.crossPercent) * len(self.population))
         #if self.corrMode == 10:
@@ -335,7 +339,7 @@ class GeneticAlgorithm(object):
         a = 2.0 * (self.selective_pressure - 1) / (len(population) - 1)
         for i in range(len(population)):
             population[i].fitness_f = self.selective_pressure - a * i    
-        return population
+        #return population
 
     def _weighted_random_choice(self, population):
         max = sum(axioms.fitness_f for axioms in population)
@@ -347,7 +351,8 @@ class GeneticAlgorithm(object):
                 return axioms
             
     def _roulette(self, population):
-        return [self._weighted_random_choice(population) for i in range(self.config['genetic_algorithms_params']['n_individuals'])]
+        #return [self._weighted_random_choice(population) for i in range(self.config['genetic_algorithms_params']['n_individuals'])]
+        return [self._weighted_random_choice(population) for i in range(len(population))]
 
     def _select(self):
         print('...select started')
@@ -358,8 +363,9 @@ class GeneticAlgorithm(object):
         self.population.sort(key = lambda x: x.obj_f)
         eliteCount = int(round(self.elitism * self.config['genetic_algorithms_params']['n_individuals']))
         newPopulation.extend(self.population[:eliteCount])
-        population = self._linearRankFitness(self.population[eliteCount:])
-        newPopulation.extend(self._roulette(population))
+        self.population = self.population[eliteCount:]
+        self._linearRankFitness(self.population)
+        newPopulation.extend(self._roulette(self.population))
         self.population = newPopulation
         self.population.sort(key = lambda x: x.obj_f)
         print('\t select done...')
