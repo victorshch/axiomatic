@@ -27,6 +27,9 @@ class AxiomSystem(object):
             if not good:
                 result[i] = -1
         return result
+    
+    def __repr__(self):
+        return "AxiomSystem(" + ", ".join(repr(a) for a in self.axiom_list) + ")"
 
 class DummyAxiom(object):
     """

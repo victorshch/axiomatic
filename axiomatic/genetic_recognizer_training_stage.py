@@ -48,6 +48,9 @@ class Specimen(object):
         return self.add_axiom(new_axiom, priority)
     
     def remove_axiom(self, axiom_index_to_remove):
+        if len(self.axiom_list) <= 1:
+            return
+        
         for abn_model in self.abn_models.values():
             for i in xrange(len(abn_model)):
                 if abn_model[i] == axiom_index_to_remove: abn_model[i] = -1
@@ -114,10 +117,11 @@ class Mutation(object):
             new_axiom_index = specimen.add_axiom(new_axiom)
             model_to_mutate.insert(pos, new_axiom_index)
         elif action == MutationActions.Remove:
-            pos = np.random.randint(len(model_to_mutate))
-            axiom_index_to_remove = model_to_mutate[pos]
-            del model_to_mutate[pos]
-            specimen.check_remove_axiom(axiom_index_to_remove)
+            if len(model_to_mutate) > 1:
+                pos = np.random.randint(len(model_to_mutate))
+                axiom_index_to_remove = model_to_mutate[pos]
+                del model_to_mutate[pos]
+                specimen.check_remove_axiom(axiom_index_to_remove)
         elif action == MutationActions.AddQuestionMarkSymbol:
             pos = np.random.randint(len(model_to_mutate))
             model_to_mutate.insert(pos, QuestionMarkSymbol)
@@ -190,8 +194,14 @@ def weighted_random_choice(chromosomes):
         if current > pick:
             return chromosome
 
-def _calculateObjectiveForPopulation(self, specimen, data_set):
-    specimen.objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)
+def _calculateObjectiveForSpecimen(self, specimen, data_set):
+    #DEBUG
+    #err1 = np.random.randint(1, 20)
+    #err2 = np.random.randint(1, 20)
+    #specimen.objective = (err1 + 20*err2, err1, err2)
+    #return
+    objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)
+    specimen.objective = (objective[0] + self.num_axioms_weight * len(specimen.axiom_list), objective[1], objective[2])
 
 class GeneticRecognizerTrainingStage(object):
     def __init__(self, config = dict()):
@@ -206,6 +216,7 @@ class GeneticRecognizerTrainingStage(object):
         self.recognizer = config.get('recognizer', AbnormalBehaviorRecognizer)
         self.recognizer_config = config.get('recognizer_config', dict(bound=0.1,maxdelta=0.5))
         self.n_jobs = config.get('n_jobs', 2)
+        self.num_axioms_weight = config.get('num_axioms_weight', 0.0)
         
     def generateInitialPopulation(self, axioms, data_set):
         population = []
@@ -229,7 +240,7 @@ class GeneticRecognizerTrainingStage(object):
     
     def calculateObjectiveForPopulation(self, population, data_set):
         # TODO parallelize
-        result = Parallel(n_jobs=self.n_jobs)(delayed(_calculateObjectiveForPopulation)(self, specimen, data_set) for specimen in population)
+        result = Parallel(n_jobs=self.n_jobs)(delayed(_calculateObjectiveForSpecimen)(self, specimen, data_set) for specimen in population)
         #for i, specimen in enumerate(population):
             #if specimen.objective is not None: continue
             #specimen.objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)[0];
@@ -245,7 +256,9 @@ class GeneticRecognizerTrainingStage(object):
 
     def select(self, population):
         newPopulation = []
-        population.sort(key = lambda s: s.objective)
+        population.sort(key = lambda s: s.objective[0])
+        print "Best objective function", population[0].objective
+        print "Worst objective function", population[-1].objective
         eliteCount = int(round(self.elitism * self.population_size))
         newPopulation.extend(population[:eliteCount])
         population = population[eliteCount:]
