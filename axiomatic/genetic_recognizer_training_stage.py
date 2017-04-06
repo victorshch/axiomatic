@@ -137,7 +137,10 @@ class Crossover(object):
         min_point_2 = 0 if p1 < len(l1) else 1
         max_point_2 = len(l2) if p1 > 0 else len(l2) - 1
         
-        p2 = np.random.randint(min_point_2, max_point_2 + 1)
+        if min_point_2 == max_point_2:
+            p2 = max_point_2
+        else:
+            p2 = np.random.randint(min_point_2, max_point_2 + 1)
         
         result = (l1[:p1], l2[p2:]), (l2[:p2], l1[p1:])
         #print "One-point crossover for ", l1, l2, "points:", p1, p2, " result:", result
