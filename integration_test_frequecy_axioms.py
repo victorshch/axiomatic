@@ -12,16 +12,12 @@ from axiomatic.objective_function import ObjectiveFunction
 from axiomatic.abnormal_behavior_recognizer import AbnormalBehaviorRecognizer
 
 with open('datasets/debug_dataset.pickle', 'rb') as f:
-    dataset = pickle.load(f, encoding='latin1')
-
-for fold in dataset:
-    for name in dataset[fold]:
-        for i in range(len(dataset[fold][name])):
-            dataset[fold][name][i] = dataset[fold][name][i][0: 10]
+    dataset = pickle.load(f)
 
 axiom_list = [MinMaxAxiom, MaxAxiom, MinAxiom, ChangeAxiom, IntegralAxiom, RelativeChangeAxiom, FirstDiffAxiom, SecondDiffAxiom]
-frequency_ec_stage = FrequencyECTrainingStage({'num_part': 2, 'max_window': 2, 'num_axioms': 5, 'axiom_list': axiom_list})
+frequency_ec_stage = FrequencyECTrainingStage({'num_part': 5, 'left_window': 2, 'right_window': 2, 'num_axioms': 10, 'axiom_list': axiom_list, 'enable_cache': True})
 frequency_axiom_stage = FrequencyAxiomTrainingStage({'num_axioms': 10, 'max_depth': 5, 'num_step_axioms': 10})
+
 dummy_recognizer_stage = DummyRecognizerTrainingStage()
 
 training_pipeline = TrainingPipeline([frequency_ec_stage, frequency_axiom_stage, dummy_recognizer_stage])
@@ -38,4 +34,3 @@ obj_fn = ObjectiveFunction(1, 20)
 obj_fn_value = obj_fn.calculate(recognizer, dataset['test'])
 
 print("Recognizer objective function: ", obj_fn_value)
-
