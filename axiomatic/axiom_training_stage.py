@@ -137,33 +137,43 @@ class ClusteringAxiom(object):
         self.dim = dim
         self.cluster_id = cluster_id
 
-    def run(self, ts):
+    def run(self, ts, cache = None):
         """
         Check whether axiom is satisfied for some dimension of time series.
         @param ts: pd.DataFrame time series
         @return: 2-dim bool np.array where True corresponds to positions where axiom is satisfied
         """
-        ans = np.full(ts.shape[0], False, dtype=bool)  # axiom can be satisfied only for specific dimension
-
-        # specific dimension of time series as pd.Series object
-        dim_ts = ts[ts.columns[self.dim]]
-
-        sample_length = self.feature_extractor.sample_length
-        features = self.feature_extractor.features
-
-        # axiom can be satisfied only in central points of time series:
-        # from first_part position to len(ts) - 1 - last_part position
-        left_nei = sample_length / 2
-        right_nei = sample_length - left_nei - 1
+        cluster_ids = np.full(ts.shape[0], -1, dtype=int)  # cluster ids for every point of ts
         
-        dim_ts_embedding = time_series_embedding(dim_ts, left_nei, right_nei)
-                
-        feature_values_list = [feature(dim_ts_embedding.values) for feature in features]
-        feature_values = np.hstack(feature_values_list)
-        
-        ans[left_nei: -right_nei] = (self.model.predict(feature_values[left_nei: -right_nei, :]) == self.cluster_id)
+        # we store clustering of ts at cache[self.model][self.dim]
+        if (cache is not None) and (self.model in cache) and (self.dim in cache[self.model]):
+            cluster_ids = cache[self.model][self.dim]
+        else:
+            # specific dimension of time series as pd.Series object
+            dim_ts = ts[ts.columns[self.dim]]
 
-        return ans
+            sample_length = self.feature_extractor.sample_length
+            features = self.feature_extractor.features
+
+            # axiom can be satisfied only in central points of time series:
+            # from first_part position to len(ts) - 1 - last_part position
+            left_nei = sample_length / 2
+            right_nei = sample_length - left_nei - 1
+            
+            dim_ts_embedding = time_series_embedding(dim_ts, left_nei, right_nei)
+                    
+            feature_values_list = [feature(dim_ts_embedding.values) for feature in features]
+            feature_values = np.hstack(feature_values_list)
+            
+            cluster_ids[left_nei: -right_nei] = self.model.predict(feature_values[left_nei: -right_nei, :])
+            
+            if isinstance(cache, dict):
+                if self.model not in cache:
+                    cache[self.model] = { self.dim: cluster_ids }
+                else:
+                    cache[self.model][self.dim] = cluster_ids
+
+        return cluster_ids == self.cluster_id
 
 
 class FeatureExtractionStage(object):
