@@ -8,10 +8,7 @@ import random
 from sklearn.cluster import KMeans
 
 from axiomatic import settings
-<<<<<<< HEAD
 from axiomatic.utils import time_series_embedding
-=======
->>>>>>> df428d9e494c8908b832031f5314b23b4cd5db3e
 
 
 class DummyAxiomTrainingStage(object):
