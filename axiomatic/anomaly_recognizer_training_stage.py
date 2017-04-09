@@ -12,16 +12,20 @@ class AxiomsMarking(object):
         self.obj_f = None
         self.fitness_f = None
         self.num = 0
+        self.normal_data_anomaly_score = None
+        self.anomaly_data_anomaly_score = None
 
     def __computeObjF(self, value=0):
         self.obj_f = value
 
-    def Update(self, value=0):
+    def Update(self, value=0, normal_score=0, anomaly_score=0):
         '''
         Updates objective function.
         Call it after every changing in axioms
         '''
         self.__computeObjF(value)
+        self.normal_data_anomaly_score = normal_score
+        self.anomaly_data_anomaly_score = anomaly_score
 
     def GenerateRandom(self, axioms_set):
         '''
@@ -81,8 +85,8 @@ class GeneticAlgorithm(object):
         for i in range(self.config['genetic_algorithms_params']['n_individuals']):
             s = AxiomsMarking()
             s.GenerateRandom(self.config['axioms_set'])
-            value = self._knn_objective_function(self._ts_transform(s.axioms))
-            s.Update(value)
+            value, normal_score, anomaly_score = self._knn_objective_function(self._ts_transform(s.axioms))
+            s.Update(value, normal_score, anomaly_score)
             self.population.append(s)
         self.population.sort(key = lambda x: x.obj_f, reverse = False)
         print('\t create population done...')
@@ -114,22 +118,32 @@ class GeneticAlgorithm(object):
     def _ts_transform(self, axioms):
         print('...ts_transform started')
         axiom_system = AxiomSystem(axioms)
-    
+        #vfunc = np.vectorize(lambda ts: axiom_system.perform_marking(ts))
+        
+        
         train_normal_data_marked = []
         for ts in self.config['train_data']['normal']:
             ts_marking = axiom_system.perform_marking(ts)
             train_normal_data_marked.append(ts_marking)
+        
+        #train_normal_data_marked = vfunc(self.config['train_data']['normal'])
     
+        
         test_normal_data_marked = []
         for ts in self.config['test_data']['normal']:
             ts_marking = axiom_system.perform_marking(ts)
             test_normal_data_marked.append(ts_marking)
         
+        #test_normal_data_marked = self.config['test_data']['normal'].apply(lambda ts: axiom_system.perform_marking(ts))
+        
+        
         test_anomaly_data_marked = []
         for ts in self.config['test_data']['anomaly']:
             ts_marking = axiom_system.perform_marking(ts)
             test_anomaly_data_marked.append(ts_marking)
-            
+        
+        #test_anomaly_data_marked = self.config['test_data']['anomaly'].apply(lambda ts: axiom_system.perform_marking(ts))
+        
         data = {'train': train_normal_data_marked, 'normal': test_normal_data_marked, 'anomaly': test_anomaly_data_marked}
         
         print('\t ts_transform done...')
@@ -173,7 +187,17 @@ class GeneticAlgorithm(object):
             anomaly_data_anomaly_score += anomaly_scores[k-1]
         
         print('\t knn_obj_f done...')
-        return normal_data_anomaly_score - anomaly_data_anomaly_score
+        return normal_data_anomaly_score - anomaly_data_anomaly_score, normal_data_anomaly_score, anomaly_data_anomaly_score
+        
+    def adaptate_probability(self, prob, x, y):
+        prob = prob * x / float(y)
+        
+        if prob < 0.1:
+            prob = 0.1
+        elif prob > 0.9:
+            prob = 0.9
+            
+        return prob
         
     def _mutate(self):
         print('...mutate started')
@@ -194,7 +218,8 @@ class GeneticAlgorithm(object):
                 mutation_type = random.randint(0,4)
                 
                 #old = copy.deepcopy(s)
-                delta_old = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
+                #delta_old = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
+                f_old = s.anomaly_data_anomaly_score / float(s.normal_data_anomaly_score+0.001)
                 
                 if mutation_type == 0:
                     # _mutate_0: random shuffle
@@ -227,14 +252,16 @@ class GeneticAlgorithm(object):
                         i = random.randint(0, len(s.axioms)-1)
                         s.axioms[i] = random.choice(list(diff_set))
                 
-                value = self._knn_objective_function(self._ts_transform(s.axioms))
-                s.Update(value)
+                value, normal_score, anomaly_score = self._knn_objective_function(self._ts_transform(s.axioms))
+                s.Update(value, normal_score, anomaly_score)
                 
                 ##############################################################################
                 
-                delta_new = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
+                #delta_new = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
+                #self.mutate_prob_matrix[c] *= delta_old / delta_new
                 
-                self.mutate_prob_matrix[c] *= delta_old / delta_new
+                f_new = s.anomaly_data_anomaly_score / float(s.normal_data_anomaly_score+0.001)
+                self.mutate_prob_matrix[c] = self.adaptate_probability(self.mutate_prob_matrix[c], f_old, f_new)
                 
                 '''
                 if self.corrMode == 10:
@@ -283,7 +310,10 @@ class GeneticAlgorithm(object):
                 
                 #old0 = copy.deepcopy(parents[0]) # adaptive
                 #old1 = copy.deepcopy(parents[1]) # adaptive
-                delta_old = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
+                #delta_old = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
+                
+                f_old_1 = self.population[p1].anomaly_data_anomaly_score / float(self.population[p1].normal_data_anomaly_score+0.001)
+                f_old_2 = self.population[p2].anomaly_data_anomaly_score / float(self.population[p2].normal_data_anomaly_score+0.001)
                 
                 min_l, max_l = min(len(parents[0].axioms), len(parents[1].axioms)), max(len(parents[0].axioms), len(parents[1].axioms))
                 k = random.randrange(min_l, max_l + 1)
@@ -295,17 +325,21 @@ class GeneticAlgorithm(object):
                 parents[0].axioms = child1
                 parents[1].axioms = child2
                 
-                value = self._knn_objective_function(self._ts_transform(parents[0].axioms))
-                parents[0].Update(value)
-                value = self._knn_objective_function(self._ts_transform(parents[1].axioms))
-                parents[1].Update(value)
+                value, normal_score, anomaly_score = self._knn_objective_function(self._ts_transform(parents[0].axioms))
+                parents[0].Update(value, normal_score, anomaly_score)
+                value, normal_score, anomaly_score = self._knn_objective_function(self._ts_transform(parents[1].axioms))
+                parents[1].Update(value, normal_score, anomaly_score)
                 
                 #######################################################################################
                 
-                delta_new = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
+                #delta_new = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
+                #self.crossover_prob_matrix[p1] *= delta_new / delta_old
+                #self.crossover_prob_matrix[p2] *= delta_new / delta_old
                 
-                self.crossover_prob_matrix[p1] *= delta_new / delta_old
-                self.crossover_prob_matrix[p2] *= delta_new / delta_old
+                f_new_1 = self.population[p1].anomaly_data_anomaly_score / float(self.population[p1].normal_data_anomaly_score+0.001)
+                f_new_2 = self.population[p2].anomaly_data_anomaly_score / float(self.population[p2].normal_data_anomaly_score+0.001)
+                self.crossover_prob_matrix[p1] = self.adaptate_probability(self.crossover_prob_matrix[p1], f_new_1, f_old_1)
+                self.crossover_prob_matrix[p2] = self.adaptate_probability(self.crossover_prob_matrix[p2], f_new_2, f_old_2)
                 
                 '''
                 if self.corrMode == 10:
