@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import pandas as pd
-import numpy as np
 
 class ObjectiveFunction(object):
     def __init__(self, k_e1, k_e2):
@@ -32,7 +30,7 @@ class ObjectiveFunction(object):
                 first_error += 1
             if x[1] == true_class:
                 second_error = 0
-        return (first_error * self.k_e1 + second_error * self.k_e2, first_error, second_error)
+        return first_error * self.k_e1 + second_error * self.k_e2, first_error, second_error
     
     def calculate(self, recognizer, data_set):
         """Вычислим стоимость ошибок распознавателя на данном множестве учатков, если для них известен истинный класс
