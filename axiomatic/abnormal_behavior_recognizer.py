@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from fastdtw import fastdtw
 from sklearn.metrics.pairwise import pairwise_distances
 
 QuestionMarkSymbol = -2
+
 
 def dtw_distances_from_matrix(D):
     N = D.shape[0]
@@ -16,9 +16,9 @@ def dtw_distances_from_matrix(D):
         S[a, 0] = D[a, 0] + S[a - 1, 0]
         R[a, 0] = 1 + R[a - 1, 0]
     for b in xrange(1, Nmax):
-        #S[N - 1, b] = D[N - 1, b] + S[N - 1, b + 1]
-        #R[N - 1, b] = R[N - 1, b + 1] + 1
-        S[0, b] = D[0, b] 
+        # S[N - 1, b] = D[N - 1, b] + S[N - 1, b + 1]
+        # R[N - 1, b] = R[N - 1, b + 1] + 1
+        S[0, b] = D[0, b]
         R[0, b] = 1
     
     for a in xrange(1, N):
@@ -48,10 +48,15 @@ def dtw_distances_from_matrix(D):
     dist = S[N - 1, :] / R[N - 1, :]
     return dist
 
+
 def dtw_distances(model, observed_marking, metric):
-    distancesM = pairwise_distances(np.array(model).reshape(-1, 1), np.array(observed_marking).reshape(-1, 1), \
-        metric=metric)
+    distancesM = pairwise_distances(
+        np.array(model).reshape(-1, 1),
+        np.array(observed_marking).reshape(-1, 1),
+        metric=metric,
+    )
     return dtw_distances_from_matrix(distancesM)
+
 
 class AbnormalBehaviorRecognizer(object):
     def __init__(self, axiom_system, model_dict, params):
@@ -66,7 +71,6 @@ class AbnormalBehaviorRecognizer(object):
         self.model_dict = model_dict
         self.maxdelta = params["maxdelta"]
         self.bound = params["bound"]
-    
 
     def recognize(self, ts):
         """Возвращаем маркировку участков нештатного поведения -- т. е. список пар (конец участка, класс)
