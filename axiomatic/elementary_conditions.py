@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import numpy as np
+
 
 def form_matrix(ts, left, right):
     n = len(ts)

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 from statsmodels.tsa.ar_model import AR
 

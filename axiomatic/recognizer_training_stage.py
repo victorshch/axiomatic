@@ -1,8 +1,9 @@
-# coding=UTF-8
+# -*- coding: utf-8 -*-
 
 import numpy as np
 
 from axiomatic.base import AxiomSystem
+
 
 class DummyRecognizerTrainingStage(object):
     """
@@ -34,5 +35,3 @@ class DummyRecognizerTrainingStage(object):
         artifacts['axiom_system'] = axiom_system
         artifacts['abn_models'] = model_dict
         return artifacts
-        
-        

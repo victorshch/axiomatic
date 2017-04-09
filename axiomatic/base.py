@@ -1,7 +1,7 @@
-# coding=UTF-8
-import numpy as np
-from random import randint
+# -*- coding: utf-8 -*-
+
 from axiomatic.elementary_conditions import *
+
 
 class AxiomSystem(object):
     def __init__(self, axiom_list):

@@ -1,4 +1,4 @@
-# coding=UTF-8
+# -*- coding: utf-8 -*-
 import numpy as np
 from fastdtw import fastdtw
 from sklearn.metrics.pairwise import pairwise_distances
