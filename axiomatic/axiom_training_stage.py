@@ -15,9 +15,8 @@ class DummyAxiomTrainingStage(object):
     """
     This training stage creates dummy axioms for every abnormal behavior class
     """
-    def __init__(self, dummy_axiom_count = 10):
+    def __init__(self, dummy_axiom_count=10):
         self.dummy_axiom_count = dummy_axiom_count
-        pass
     
     def train(self, data_set, artifacts):
         artifacts['axioms'] = {}
