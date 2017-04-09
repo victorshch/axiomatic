@@ -10,10 +10,9 @@ class DummyRecognizerTrainingStage(object):
     This training stage selects axioms and abnormal behavior models randomly.
     It can be used for testing
     """
-    def __init__(self, axiom_count = 5, abn_model_length = 5):
+    def __init__(self, axiom_count=5, abn_model_length=5):
         self.axiom_count = axiom_count
         self.abn_model_length = abn_model_length
-        pass
     
     def train(self, data_set, artifacts):
         """
