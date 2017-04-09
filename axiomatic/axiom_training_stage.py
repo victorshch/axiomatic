@@ -5,6 +5,7 @@ import numpy as np
 from scipy import optimize
 from scipy.ndimage import maximum_filter
 from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans
 
 from axiomatic import settings
 from axiomatic.utils import time_series_embedding
@@ -14,7 +15,7 @@ class DummyAxiomTrainingStage(object):
     """
     This training stage creates dummy axioms for every abnormal behavior class
     """
-    def __init__(self, dummy_axiom_count=10):
+    def __init__(self, dummy_axiom_count = 10):
         self.dummy_axiom_count = dummy_axiom_count
     
     def train(self, data_set, artifacts):
@@ -134,7 +135,7 @@ class FrequencyAxiomTrainingStage:
 
 
 class ClusteringAxiom(object):
-    def __init__(self, model, feature_extractor, dim, cluster_id):
+    def __init__(self, model, feature_extractor, dim, cluster_id, cluster_radiuses):
         """
         @param model: sklearn.cluster.KMeans object, containing information about cluster centers
         @param feature_extractor: instance of FeatureExtractionStage
@@ -145,6 +146,14 @@ class ClusteringAxiom(object):
         self.feature_extractor = feature_extractor
         self.dim = dim
         self.cluster_id = cluster_id
+        self.cluster_radiuses = cluster_radiuses
+
+    def get_cluster_numbers(self, all_cluster_distances):
+        cluster_number_candidates = np.argmin(all_cluster_distances, axis=1)
+        cluster_distances = all_cluster_distances[np.arange(all_cluster_distances.shape[0]), cluster_number_candidates]
+        # we exclude elements whose distance to their centroid is larger than the cluster's radius
+        cluster_number_candidates[cluster_distances > self.cluster_radiuses[cluster_number_candidates]] = -1
+        return cluster_number_candidates
 
     def run(self, ts, cache=None):
         """
@@ -175,7 +184,7 @@ class ClusteringAxiom(object):
             feature_values_list = [feature(dim_ts_embedding.values) for feature in features]
             feature_values = np.hstack(feature_values_list)
             
-            cluster_ids[left_nei: -right_nei] = self.model.predict(feature_values[left_nei: -right_nei, :])
+            cluster_ids[left_nei: -right_nei] = self.get_cluster_numbers(self.model.transform(feature_values[left_nei: -right_nei, :]))
             
             if isinstance(cache, dict):
                 if self.model not in cache:
@@ -252,6 +261,8 @@ class KMeansClusteringAxiomStage(object):
 
         # stores feature extractor
         self.feature_extractor = FeatureExtractionStage(config.get('feature_extraction_params', {}))
+        
+        self.cluster_radius_relaxation = config.get('cluster_radius_relaxation', 1.25)
 
     @staticmethod
     def get_all_time_series(training_set):
@@ -276,6 +287,20 @@ class KMeansClusteringAxiomStage(object):
 
         return ts_for_dim
 
+    def get_cluster_radiuses(self, cluster_distances):
+        """
+        @param cluster_distances array of size n x k containing distance for each sample to each cluster centroid
+        n is the number of samples, k is the number of clusters
+        """
+        # numbers of closest centroids
+        min_indices = np.argmin(cluster_distances, axis=1)
+        b = np.ones(cluster_distances.shape, dtype = np.bool)
+        b[np.arange(b.shape[0]), min_indices] = False
+        # this way, distances to centroids farther than the closest are replaced with nan
+        cluster_distances[b] = np.nan
+        maximum_distances_for_cluster = np.nanmax(cluster_distances, axis=0)
+        return self.cluster_radius_relaxation * maximum_distances_for_cluster
+
     def train_clustering_model_for_dim(self, dim_ts_list, dim):
         """
         Train clustering model for specific dimension
@@ -285,14 +310,18 @@ class KMeansClusteringAxiomStage(object):
         """
         # make features for clustering
         X = self.feature_extractor.prepare_features(dim_ts_list)
-
+        
         # train clustering model
         self.clustering_models[dim].fit(X)
+        
+        cluster_distances = self.clustering_models[dim].transform(X)
+        
+        cluster_radiuses = self.get_cluster_radiuses(cluster_distances)
 
         # generate axioms for this dimension
         axioms = []
         for cluster in range(self.clustering_models[dim].n_clusters):
-            axioms.append(ClusteringAxiom(self.clustering_models[dim], self.feature_extractor, dim, cluster))
+            axioms.append(ClusteringAxiom(self.clustering_models[dim], self.feature_extractor, dim, cluster, cluster_radiuses))
 
         return axioms
 
