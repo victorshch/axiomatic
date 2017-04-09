@@ -20,17 +20,20 @@ class MinMaxAxiom(object):
         self.pmax += self.pmin
 
     @classmethod
-    def bounds(self, data):
+    def bounds(cls, data):
         best, worst = max(data[0]), min(data[0])
 
         for ts in data:
             best = max(best, max(ts))
             worst = min(worst, min(ts))
-        return ((worst, best), (0, best - worst))
+        return (worst, best), (0, best - worst)
     
     def run(self, ts, cache):
         matrix = cache if len(cache) > 0 else form_matrix(ts, self.l, self.r)
-        return np.logical_and(np.less_equal(np.nanmax(matrix, axis=0), self.pmax), np.greater_equal(np.nanmin(matrix, axis=0), self.pmin))
+        return np.logical_and(
+            np.less_equal(np.nanmax(matrix, axis=0), self.pmax),
+            np.greater_equal(np.nanmin(matrix, axis=0), self.pmin),
+        )
 
 
 class MaxAxiom(object):
@@ -40,7 +43,7 @@ class MaxAxiom(object):
         self.l, self.r = params
 
     @classmethod
-    def bounds(self, data):
+    def bounds(cls, data):
         return tuple()
     
     def run(self, ts, cache):
@@ -55,7 +58,7 @@ class MinAxiom(object):
         self.l, self.r = params
     
     @classmethod
-    def bounds(self, data):
+    def bounds(cls, data):
         return tuple()
     
     def run(self, ts, cache):
@@ -71,13 +74,13 @@ class ChangeAxiom(object):
         self.pmax += self.pmin
 
     @classmethod
-    def bounds(self, data):
+    def bounds(cls, data):
         best = max(abs(data[0]))
 
         for ts in data:
             best = max(best, max(abs(ts)))
         best *= 2
-        return ((0, best), (0, best))
+        return (0, best), (0, best)
     
     def run(self, ts, cache):
         matrix = cache if len(cache) > 0 else form_matrix(ts, self.l, self.r)
@@ -93,14 +96,14 @@ class IntegralAxiom(object):
         self.pmax += self.pmin
 
     @classmethod
-    def bounds(self, data):
+    def bounds(cls, data):
         bestsum = sum(data[0])
         worstsum = sum(data[0])
 
         for ts in data:
             bestsum = max(bestsum, sum(ts))
             worstsum = min(worstsum, sum(ts))
-        return ((worstsum, bestsum), (0, bestsum - worstsum))
+        return (worstsum, bestsum), (0, bestsum - worstsum)
     
     def run(self, ts, cache):
         matrix = cache if len(cache) > 0 else form_matrix(ts, self.l, self.r)
@@ -116,14 +119,14 @@ class RelativeChangeAxiom(object):
         self.pmax += self.pmin
 
     @classmethod
-    def bounds(self, data):
+    def bounds(cls, data):
         best = max(data[0])
         worst = min(data[0])
 
         for ts in data:
             best = max(best, max(ts))
             worst = min(worst, min(ts))
-        return ((worst - best, best - worst), (0, (best - worst) * 2))
+        return (worst - best, best - worst), (0, (best - worst) * 2)
 
     def run(self, ts, cache):
         matrix = cache if len(cache) > 0 else form_matrix(ts, self.l, self.r)
@@ -134,6 +137,7 @@ class RelativeChangeAxiom(object):
         rrange = abs(np.repeat(np.arange(-self.l, self.r + 1)[:, np.newaxis], len(ts), axis=1))
         return np.logical_and(np.nanmin(diff - rrange * self.pmin, axis=0) >= 0, np.nanmin(rrange * self.pmax - diff, axis=0) >= 0)
 
+
 class FirstDiffAxiom(object):
     num_params = 4
 
@@ -142,14 +146,14 @@ class FirstDiffAxiom(object):
         self.pmax += self.pmin
 
     @classmethod
-    def bounds(self, data):
+    def bounds(cls, data):
         best = max(data[0])
         worst = min(data[0])
 
         for ts in data:
             best = max(best, max(ts))
             worst = min(worst, min(ts))
-        return ((worst - best, best - worst), (0, (best - worst) * 2))
+        return (worst - best, best - worst), (0, (best - worst) * 2)
     
     def run(self, ts, cache):
         matrix = cache if len(cache) > 0 else form_matrix(ts, self.l, self.r)
@@ -165,14 +169,14 @@ class SecondDiffAxiom(object):
         self.pmax += self.pmin
 
     @classmethod
-    def bounds(self, data):
+    def bounds(cls, data):
         best = max(data[0])
         worst = min(data[0])
 
         for ts in data:
             best = max(best, max(ts))
             worst = min(worst, min(ts))
-        return ((worst * 2 - best * 2, best * 2 - worst * 2), (0, (best - worst) * 4))
+        return (worst * 2 - best * 2, best * 2 - worst * 2), (0, (best - worst) * 4)
     
     def run(self, ts, cache):
         matrix = cache if len(cache) > 0 else form_matrix(ts, self.l, self.r)
