@@ -8,7 +8,10 @@ import random
 #from sklearn.cluster import KMeans
 
 from axiomatic import settings
+<<<<<<< HEAD
 from axiomatic.utils import time_series_embedding
+=======
+>>>>>>> df428d9e494c8908b832031f5314b23b4cd5db3e
 
 
 from axiomatic.base import form_matrix
@@ -135,6 +138,7 @@ class FrequencyAxiomTrainingStage:
         artifacts["axioms"] = result
         artifacts.pop("cache")
         return artifacts
+
 
 class ClusteringAxiom(object):
     def __init__(self, model, feature_extractor, dim, cluster_id):
