@@ -92,3 +92,14 @@ def time_series_embedding(series, left_neighbourhood, right_neighbourhood):
                          xrange(left_neighbourhood,  -right_neighbourhood - 1, -1)]
     
     return pd.DataFrame(dict(ts_embedding_list))
+
+
+def transform_dataset(dataset):
+    time_series_list = []
+    ts_class = []
+
+    for class_name, ts_list in dataset.iteritems():
+        time_series_list.extend(ts_list)
+        ts_class.extend([class_name] * len(ts_list))
+
+    return time_series_list, ts_class
