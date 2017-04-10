@@ -1,36 +1,38 @@
-# coding=UTF-8
-import numpy as np
-from random import randint
+# -*- coding: utf-8 -*-
+
 from axiomatic.elementary_conditions import *
+
 
 class AxiomSystem(object):
     def __init__(self, axiom_list):
         self.axiom_list = axiom_list
-    
-    # возвращает разметку временного ряда ts как array-like (напр., np.array) с номерами аксиом, выполняющихся в соотв. точках ts
+
     def perform_marking(self, ts):
-        axiom_result = np.empty(shape=[ts.shape[0], 1])
+        """
+        Возвращает разметку временного ряда ts как array-like (напр., np.array) с номерами аксиом,
+        выполняющихся в соотв. точках ts
+        @ts: временной ряд, который необходимо разметить
+        """
         cache = {}
+        
+        result = np.full(ts.shape[0], -1, dtype=int)
+        
+        if len(self.axiom_list) == 0:
+            print "Warning: perform_marking for an empty axiom system"
+            return result
+        
+        axiom_result = np.hstack([np.array(x.run(ts, cache).reshape(-1, 1)) for x in self.axiom_list])
+        
+        any_axiom_fulfilled = np.any(axiom_result, axis=1)
+        min_axiom_no = np.argmax(axiom_result, axis=1)
+        
+        result[any_axiom_fulfilled] = min_axiom_no[any_axiom_fulfilled]
 
-        for x in self.axiom_list:
-            axiom_result = np.column_stack((axiom_result, x.run(ts, cache)))
-        result = np.zeros(len(ts))
-
-        for i in range(len(ts)):
-            good = False
-
-            for j in range(len(self.axiom_list)):
-                if axiom_result[(i, j)]:
-                    result[i] = j
-                    good = True
-                    break
-
-            if not good:
-                result[i] = -1
         return result
     
     def __repr__(self):
         return "AxiomSystem(" + ", ".join(repr(a) for a in self.axiom_list) + ")"
+
 
 class DummyAxiom(object):
     """
@@ -50,11 +52,12 @@ class DummyAxiom(object):
     def __repr__(self):
         return "Dummy(" + str(id(self) % 1000) + ")"
 
+
 class Axiom(object):
-    def __init__(self, axiom = []):
+    def __init__(self, axiom=[]):
         self.dnf = [] if axiom == [] else [[axiom]]
 
-    def run(self, ts, cache = []):
+    def run(self, ts, cache=[]):
         res = np.zeros(len(ts))
 
         for kf in self.dnf:
@@ -94,7 +97,7 @@ class Axiom(object):
 
 
 class AbstractAxiom(object):
-    def __init__(self, sign, dim, axiom, params = []):
+    def __init__(self, sign, dim, axiom, params=[]):
         self.sign = sign
         self.dim = dim
         self.axiom = axiom
@@ -109,10 +112,10 @@ class AbstractAxiom(object):
         for now in bnd:
             left, right = now
             step = (right - left) / num_part
-            res = res + (slice(left, right, step), )
+            res += (slice(left, right, step), )
         return res
 
-    def run(self, ts, cache = []):
+    def run(self, ts, cache=[]):
         res = self.concrete_axiom.run(ts[ts.columns[self.dim]].values, [] if len(cache) == 0 else cache[self.dim])
         
         if self.sign == 1:
@@ -133,17 +136,18 @@ class AbstractAxiom(object):
         params = [left_window, right_window] + params
         return self.static_run_one(params, data_abnorm, cache_abnorm) / (1 + self.static_run_one(params, data_norm, cache_norm))
 
+
 class TrainingPipeline(object):
     """
     This class allows to run training stages consecutively
     """
     def __init__(self, stage_list):
         self.stage_list = stage_list
-        
-    """
-    Run stages from self.stage_list consecutively on same artifacts dict
-    """
+
     def train(self, data_set):
+        """
+        Run stages from self.stage_list consecutively on same artifacts dict
+        """
         artifacts = dict()
         for stage in self.stage_list:
             artifacts = stage.train(data_set, artifacts)

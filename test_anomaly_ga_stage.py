@@ -20,7 +20,7 @@ print('\t done...')
 
 print('...prepare data started')
 
-ds = pd.read_csv('train.csv', sep=',', header=None)
+ds = pd.read_csv('datasets/electric_device_train.csv', sep=',', header=None)
 
 ds.columns = ['class_']+list(ds.columns[1:])
 
@@ -76,8 +76,8 @@ print('\t done...')
 
 print('...create ga config started')
 
-config = {'genetic_algorithms_params': {'n_individuals': 15, 'mutation_prob_init': 0.7, 'crossover_prob_init': 0.7}, 
-         'stop_criterion': {'maxIter': 10, 'maxIterWithoutChange': 5, 'minObjF': -1},
+config = {'genetic_algorithms_params': {'n_individuals': 3, 'mutation_prob_init': 0.7, 'crossover_prob_init': 0.7}, 
+         'stop_criterion': {'maxIter': 3, 'maxIterWithoutChange': 1, 'minObjF': -1},
          'objective_function_algorithm': 'knn',
          'axioms_set': artifacts['axioms']['_clusters'],
          'train_data': dataset['train'], 'test_data': dataset['test']}

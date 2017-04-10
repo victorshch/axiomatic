@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from difflib import SequenceMatcher
 import random, copy, time
+from math import sqrt
 
 class AxiomsMarking(object):
     '''
@@ -72,7 +73,8 @@ class GeneticAlgorithm(object):
         
     def Step(self):
         print('...step started')
-        self._select()
+        #self._select()
+        self._select_1()
         self._crossover()
         self._mutate()
         self._evalPopulation()
@@ -193,30 +195,37 @@ class GeneticAlgorithm(object):
         for ts_test in data['normal']:
             anomaly_scores = []
             for ts_train in data['train']:
-                anomaly_score = 1 - self._LCS(ts_test, ts_train) / float(len(ts_test))
+                anomaly_score = 1 - self._LCS(ts_test, ts_train) / float(sqrt(len(ts_test)*len(ts_train)))
                 anomaly_scores.append(anomaly_score)
-            anomaly_scores.sort(reverse = True)
+            anomaly_scores.sort(reverse = False)
             normal_data_anomaly_score += anomaly_scores[k-1]
                 
         anomaly_data_anomaly_score = 0
         for ts_test in data['anomaly']:
             anomaly_scores = []
             for ts_train in data['train']:
-                anomaly_score = 1 - self._LCS(ts_test, ts_train) / float(len(ts_test))
+                anomaly_score = 1 - self._LCS(ts_test, ts_train) / float(sqrt(len(ts_test)*len(ts_train)))
                 anomaly_scores.append(anomaly_score)
-            anomaly_scores.sort(reverse = True)
+            anomaly_scores.sort(reverse = False)
             anomaly_data_anomaly_score += anomaly_scores[k-1]
         
         print('\t knn_obj_f done...')
         return normal_data_anomaly_score - anomaly_data_anomaly_score, normal_data_anomaly_score, anomaly_data_anomaly_score
         
     def adaptate_probability(self, prob, x, y):
-        prob = prob * x / float(y)
+        '''
+        prob = prob * x / float(y + 0.0001)
         
         if prob < 0.3:
             prob = 0.3
         elif prob > 0.9:
             prob = 0.9
+        '''
+            
+        if x > y:
+            prob = random.uniform(prob, 0.9)
+        elif x < y:
+            prob = random.uniform(0.3, prob)
             
         return prob
         
@@ -242,7 +251,7 @@ class GeneticAlgorithm(object):
                 #delta_old = np.std([s_.obj_f for s_ in self.population]) / (np.mean([s_.obj_f for s_ in self.population])+0.00001)
                 f_old = s.anomaly_data_anomaly_score / float(s.normal_data_anomaly_score+0.001)
                 
-                if mutation_type == 0:
+                if (mutation_type == 0) or (self.currentIter % 5 == 0):
                     # _mutate_0: random shuffle
                     print('_mutate_0')
                     random.shuffle(s.axioms)
@@ -412,6 +421,7 @@ class GeneticAlgorithm(object):
         if len(self.population) < 2:
             print('\t select done...')
             return
+            
         newPopulation = []
         self.population.sort(key = lambda x: x.obj_f)
         eliteCount = int(round(self.elitism * self.config['genetic_algorithms_params']['n_individuals']))
@@ -421,6 +431,27 @@ class GeneticAlgorithm(object):
         newPopulation.extend(self._roulette(self.population))
         self.population = newPopulation
         self.population.sort(key = lambda x: x.obj_f)
+        print('\t select done...')
+        
+    def _select_1(self):
+        print('...select started')
+        if len(self.population) < 2:
+            print('\t select done...')
+            return
+        
+        print('pop len before = '+str(len(self.population)))
+        self.population.sort(key = lambda x: x.obj_f)
+        eliteCount = int(round((0.75) * self.config['genetic_algorithms_params']['n_individuals']))
+        newPopulation = []
+        newPopulation.extend(self.population[:eliteCount]) # best species  
+        
+        random_species = self.population[eliteCount:]
+        random_species = np.random.choice(random_species, len(random_species), replace=True) # random bad species
+        newPopulation.extend(random_species)
+        
+        self.population = newPopulation
+        self.population.sort(key = lambda x: x.obj_f)
+        print('pop len after = '+str(len(self.population)))
         print('\t select done...')
     
     def _evalPopulation(self):

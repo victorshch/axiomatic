@@ -1,25 +1,21 @@
-# coding=UTF-8
-from scipy import optimize
-from axiomatic.base import AbstractAxiom, Axiom, DummyAxiom
-from scipy.ndimage import maximum_filter
-import numpy as np
-import pandas as pd
+# -*- coding: utf-8 -*-
+
 import random
-#from sklearn.cluster import KMeans
+import numpy as np
+from scipy import optimize
+from scipy.ndimage import maximum_filter
+from sklearn.cluster import KMeans
 
 from axiomatic import settings
 from axiomatic.utils import time_series_embedding
 
 
-from axiomatic.base import form_matrix
-
 class DummyAxiomTrainingStage(object):
     """
     This training stage creates dummy axioms for every abnormal behavior class
     """
-    def __init__(self, dummy_axiom_count = 10):
+    def __init__(self, dummy_axiom_count=10):
         self.dummy_axiom_count = dummy_axiom_count
-        pass
     
     def train(self, data_set, artifacts):
         artifacts['axioms'] = {}
@@ -136,10 +132,12 @@ class FrequencyAxiomTrainingStage:
         artifacts.pop("cache")
         return artifacts
 
+
 class ClusteringAxiom(object):
     def __init__(self, model, feature_extractor, dim, cluster_id):
         """
         @param model: sklearn.cluster.KMeans object, containing information about cluster centers
+        @param feature_extractor: instance of FeatureExtractionStage
         @param dim: dimension for which axiom is constructed
         @param cluster_id: number of the cluster for this axiom
         """
@@ -148,10 +146,11 @@ class ClusteringAxiom(object):
         self.dim = dim
         self.cluster_id = cluster_id
 
-    def run(self, ts, cache = None):
+    def run(self, ts, cache=None):
         """
         Check whether axiom is satisfied for some dimension of time series.
         @param ts: pd.DataFrame time series
+        @param cache: cache for predictions
         @return: 2-dim bool np.array where True corresponds to positions where axiom is satisfied
         """
         cluster_ids = np.full(ts.shape[0], -1, dtype=int)  # cluster ids for every point of ts
