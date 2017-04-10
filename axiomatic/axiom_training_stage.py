@@ -7,7 +7,6 @@ from scipy.ndimage import maximum_filter
 from sklearn.cluster import KMeans
 
 from axiomatic import settings
-from axiomatic.base import AbstractAxiom, Axiom, DummyAxiom, form_matrix
 from axiomatic.utils import time_series_embedding
 
 
