@@ -1,5 +1,15 @@
-from ..features import Maximum, Minimum, Mean, LinearRegressionCoef, StdDeviation
+# -*- coding: utf-8 -*-
+
+from ..features import (
+    Maximum,
+    Minimum,
+    Mean,
+    StdDeviation,
+    Kurtosis,
+    Skewness,
+    LinearRegressionCoef,
+)
 
 DEFAULT_SAMPLE_LENGTH = 20
 DEFAULT_RATIO = 0.3
-DEFAULT_FEATURES = [Maximum(), Minimum(), Mean(), LinearRegressionCoef(), StdDeviation()]
+DEFAULT_FEATURES = [Maximum(), Minimum(), Mean(), StdDeviation(), Kurtosis(), Skewness(), LinearRegressionCoef()]

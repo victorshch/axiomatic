@@ -1,18 +1,18 @@
-# coding=UTF-8
+# -*- coding: utf-8 -*-
 
 import numpy as np
 
 from axiomatic.base import AxiomSystem
+
 
 class DummyRecognizerTrainingStage(object):
     """
     This training stage selects axioms and abnormal behavior models randomly.
     It can be used for testing
     """
-    def __init__(self, axiom_count = 5, abn_model_length = 5):
+    def __init__(self, axiom_count=5, abn_model_length=5):
         self.axiom_count = axiom_count
         self.abn_model_length = abn_model_length
-        pass
     
     def train(self, data_set, artifacts):
         """
@@ -34,5 +34,3 @@ class DummyRecognizerTrainingStage(object):
         artifacts['axiom_system'] = axiom_system
         artifacts['abn_models'] = model_dict
         return artifacts
-        
-        
