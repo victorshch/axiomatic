@@ -1,5 +1,7 @@
 from base import AxiomSystem
 import numpy as np
+import pandas as pd
+from difflib import SequenceMatcher
 import random, copy, time
 
 class AxiomsMarking(object):
@@ -91,8 +93,6 @@ class GeneticAlgorithm(object):
         self.population.sort(key = lambda x: x.obj_f, reverse = False)
         print('\t create population done...')
         
-        print('pop:', len(self.population))
-        
         self.currentBestSolution = copy.deepcopy(self.population[0])
         
         while not self._checkStopCondition():
@@ -100,7 +100,7 @@ class GeneticAlgorithm(object):
             print('Iteration =', self.currentIter ,'; Best score =', '%.10f' % self.currentBestSolution.obj_f, self.currentBestSolution)
             
         print("\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/")
-        print("Best solution (found on", self.currentIter, "iteration):", self.currentBestSolution)
+        print("Best solution (found on", self.currentIter, "iteration):", self.currentBestSolution.obj_f)
         print("--------------------------------------")
         #Algorithm.time = time.time() - Algorithm.time
         #self.stat.AddExecution(Execution(copy.deepcopy(self.currentSolution), self.currentIter, Algorithm.time, Algorithm.timecounts, Algorithm.simcounts))
@@ -118,8 +118,13 @@ class GeneticAlgorithm(object):
     def _ts_transform(self, axioms):
         print('...ts_transform started')
         axiom_system = AxiomSystem(axioms)
-        #vfunc = np.vectorize(lambda ts: axiom_system.perform_marking(ts))
         
+        train_normal_data_marked = pd.DataFrame(self.config['train_data']['normal']).ix[:,0].apply(axiom_system.perform_marking)
+        test_normal_data_marked = pd.DataFrame(self.config['test_data']['normal']).ix[:,0].apply(axiom_system.perform_marking)
+        test_anomaly_data_marked = pd.DataFrame(self.config['test_data']['anomaly']).ix[:,0].apply(axiom_system.perform_marking)
+        
+        '''
+        #vfunc = np.vectorize(lambda ts: axiom_system.perform_marking(ts))
         
         train_normal_data_marked = []
         for ts in self.config['train_data']['normal']:
@@ -143,6 +148,7 @@ class GeneticAlgorithm(object):
             test_anomaly_data_marked.append(ts_marking)
         
         #test_anomaly_data_marked = self.config['test_data']['anomaly'].apply(lambda ts: axiom_system.perform_marking(ts))
+        '''
         
         data = {'train': train_normal_data_marked, 'normal': test_normal_data_marked, 'anomaly': test_anomaly_data_marked}
         
@@ -151,6 +157,7 @@ class GeneticAlgorithm(object):
         
     def _LCS(self, s1, s2):
         #print('...LCS started')
+        '''
         m = [[0] * (1 + len(s2)) for i in range(1 + len(s1))]
         longest, x_longest = 0, 0
         for x in range(1, 1 + len(s1)):
@@ -162,8 +169,22 @@ class GeneticAlgorithm(object):
                         x_longest = x
                 else:
                     m[x][y] = 0
+        '''
+        
+        s = SequenceMatcher(None, s1, s2, autojunk=False)
+        #t = s.find_longest_match(0, len(s1), 0, len(s2))
+        l = sum(t[2] for t in s.get_matching_blocks())
         
         #print('\t LCS done...')
+        #return len(s1[x_longest - longest: x_longest])
+        #return t[2]
+        return l
+        
+    def _fastLCS(self, s1, s2):
+        #print('...fastLCS started')
+        
+        
+        #print('\t fastLCS done...')
         return len(s1[x_longest - longest: x_longest])
         
     def _knn_objective_function(self, data, k=5):
@@ -192,8 +213,8 @@ class GeneticAlgorithm(object):
     def adaptate_probability(self, prob, x, y):
         prob = prob * x / float(y)
         
-        if prob < 0.1:
-            prob = 0.1
+        if prob < 0.3:
+            prob = 0.3
         elif prob > 0.9:
             prob = 0.9
             
@@ -289,8 +310,6 @@ class GeneticAlgorithm(object):
         if len(self.population) < 2:
             print('\t crossover done...')
             return
-            
-        print('pop:', len(self.population))
             
         new_pop = []
         notCrossNum = int((1.0 - self.crossPercent) * len(self.population))
