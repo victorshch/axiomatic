@@ -331,7 +331,6 @@ class AxiomUnionStage(object):
 
     def train(self, data_set, artifacts):
         axioms = dict()
-
         for stage in self.stages:
             curr_axioms = stage.train(data_set, deepcopy(artifacts))["axioms"]
 
