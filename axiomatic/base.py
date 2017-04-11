@@ -27,7 +27,6 @@ class AxiomSystem(object):
         min_axiom_no = np.argmax(axiom_result, axis=1)
         
         result[any_axiom_fulfilled] = min_axiom_no[any_axiom_fulfilled]
-
         return result
     
     def __repr__(self):
