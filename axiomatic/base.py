@@ -22,7 +22,7 @@ class AxiomSystem(object):
             print "Warning: perform_marking for an empty axiom system"
             return result
         
-        axiom_result = np.hstack([np.array(x.run(ts).reshape(-1, 1)) for x in self.axiom_list])
+        axiom_result = np.hstack([np.array(x.run(ts, cache).reshape(-1, 1)) for x in self.axiom_list])
         
         any_axiom_fulfilled = np.any(axiom_result, axis=1)
         min_axiom_no = np.argmax(axiom_result, axis=1)
@@ -145,7 +145,7 @@ class TrainingPipeline(object):
     def __init__(self, stage_list):
         self.stage_list = stage_list
 
-    def train(self, data_set):
+    def train(self, data_set, artifacts):
         """
         Run stages from self.stage_list consecutively on same artifacts dict
         """
