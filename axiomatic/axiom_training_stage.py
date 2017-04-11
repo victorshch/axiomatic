@@ -10,7 +10,8 @@ from copy import deepcopy
 from axiomatic import settings
 from axiomatic.utils import time_series_embedding
 
-from base import DummyAxiom
+from axiomatic.elementary_conditions import form_matrix
+from axiomatic.base import AbstractAxiom, Axiom, DummyAxiom
 
 from axiomatic.elementary_conditions import form_matrix
 from axiomatic.base import AbstractAxiom, Axiom, DummyAxiom
