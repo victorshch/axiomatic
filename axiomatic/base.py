@@ -2,7 +2,6 @@
 
 from axiomatic.elementary_conditions import *
 
-
 class AxiomSystem(object):
     def __init__(self, axiom_list):
         self.axiom_list = axiom_list
@@ -144,7 +143,7 @@ class TrainingPipeline(object):
     def __init__(self, stage_list):
         self.stage_list = stage_list
 
-    def train(self, data_set):
+    def train(self, data_set, artifacts):
         """
         Run stages from self.stage_list consecutively on same artifacts dict
         """
