@@ -5,11 +5,13 @@ import numpy as np
 from scipy import optimize
 from scipy.ndimage import maximum_filter
 from sklearn.cluster import KMeans
+from copy import deepcopy
 
 from axiomatic import settings
 from axiomatic.utils import time_series_embedding
 
-from base import DummyAxiom
+from axiomatic.elementary_conditions import form_matrix
+from axiomatic.base import AbstractAxiom, Axiom, DummyAxiom
 
 class DummyAxiomTrainingStage(object):
     """
@@ -321,14 +323,20 @@ class KMeansClusteringAxiomStage(object):
         return artifacts
 
 
-class TrainingStage(object):
+class AxiomUnionStage(object):
     def __init__(self, stages):
         self.stages = stages
 
     def train(self, data_set, artifacts):
-        axioms = []
+        axioms = dict()
 
-        for stage, config in self.stages:
-            axioms += stage(config).train(data_set, artifacts.deep_copy())["axioms"]
+        for stage in self.stages:
+            curr_axioms = stage.train(data_set, deepcopy(artifacts))["axioms"]
+
+            for key in curr_axioms:
+                if key in axioms:
+                    axioms[key] += curr_axioms[key]
+                else:
+                    axioms[key] = curr_axioms[key]
         artifacts["axioms"] = axioms
         return artifacts
