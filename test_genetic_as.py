@@ -16,7 +16,7 @@ genetic_recognizer_stage = GeneticRecognizerTrainingStage(dict(n_jobs=1, populat
 
 training_pipeline = TrainingPipeline([dummy_axiom_stage, genetic_recognizer_stage])
 
-artifacts = training_pipeline.train(dataset)
+artifacts = training_pipeline.train(dataset, dict())
 
 print "Artifacts after training: ", artifacts
 

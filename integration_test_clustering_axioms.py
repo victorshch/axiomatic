@@ -18,7 +18,7 @@ dummy_recognizer_stage = DummyRecognizerTrainingStage()
 
 training_pipeline = TrainingPipeline([clustering_axiom_stage, dummy_recognizer_stage])
 
-artifacts = training_pipeline.train(dataset)
+artifacts = training_pipeline.train(dataset, dict())
 
 print "Artifacts after training: ", artifacts
 

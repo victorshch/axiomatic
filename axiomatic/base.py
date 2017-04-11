@@ -14,10 +14,9 @@ class AxiomSystem(object):
         @ts: временной ряд, который необходимо разметить
         """
         axiom_result = np.empty(shape=[ts.shape[0], 1])
-        cache = {}
 
         for x in self.axiom_list:
-            axiom_result = np.column_stack((axiom_result, x.run(ts, cache)))
+            axiom_result = np.column_stack((axiom_result, x.run(ts)))
         result = np.zeros(len(ts))
 
         for i in range(len(ts)):
@@ -147,7 +146,7 @@ class TrainingPipeline(object):
     def __init__(self, stage_list):
         self.stage_list = stage_list
 
-    def train(self, data_set):
+    def train(self, data_set, artifacts):
         """
         Run stages from self.stage_list consecutively on same artifacts dict
         """

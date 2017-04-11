@@ -68,7 +68,7 @@ class Specimen(object):
     
     def make_list_with_axioms(self, cl):
         marking = self.abn_models[cl]
-        return [self.axiom_list[i] if i >= 0 else i for i in marking]
+        return [self.axiom_list[int(i)] if i >= 0 else i for i in marking]
     
     def make_marking(self, axiom_list_with_numbers):
         return [(index_of(self.axiom_list, a) if not isinstance(a, int) else a) for a in axiom_list_with_numbers]
@@ -112,21 +112,21 @@ class Mutation(object):
         elif action == MutationActions.AddOwn:
             pos = np.random.randint(len(model_to_mutate))
             new_axiom_index = np.random.randint(len(specimen.axiom_list))
-            model_to_mutate.insert(pos, new_axiom_index)
+            np.insert(model_to_mutate, pos, new_axiom_index)
         elif action == MutationActions.AddForeign:
             pos = np.random.randint(len(model_to_mutate))
             new_axiom = np.random.choice(axioms)
             new_axiom_index = specimen.add_axiom(new_axiom)
-            model_to_mutate.insert(pos, new_axiom_index)
+            np.insert(model_to_mutate, pos, new_axiom_index)
         elif action == MutationActions.Remove:
             if len(model_to_mutate) > 1:
                 pos = np.random.randint(len(model_to_mutate))
                 axiom_index_to_remove = model_to_mutate[pos]
-                del model_to_mutate[pos]
+                np.delete(model_to_mutate, pos)
                 specimen.check_remove_axiom(axiom_index_to_remove)
         elif action == MutationActions.AddQuestionMarkSymbol:
             pos = np.random.randint(len(model_to_mutate))
-            model_to_mutate.insert(pos, QuestionMarkSymbol)
+            np.insert(model_to_mutate, pos, QuestionMarkSymbol)
         else:
             print "Specimen.mutate() unknown action", action
             
