@@ -148,12 +148,8 @@ class ClusteringAxiom(object):
         self.cluster_id = cluster_id
         self.cluster_radiuses = cluster_radiuses
 
-    def get_cluster_numbers(self, all_cluster_distances):
-        cluster_number_candidates = np.argmin(all_cluster_distances, axis=1)
-        cluster_distances = all_cluster_distances[np.arange(all_cluster_distances.shape[0]), cluster_number_candidates]
-        # we exclude elements whose distance to their centroid is larger than the cluster's radius
-        cluster_number_candidates[cluster_distances > self.cluster_radiuses[cluster_number_candidates]] = -1
-        return cluster_number_candidates
+    def get_cluster_membership(self, all_cluster_distances):
+        return all_cluster_distances < self.cluster_radiuses.reshape(1, -1)
 
     def run(self, ts, cache=None):
         """
@@ -162,11 +158,11 @@ class ClusteringAxiom(object):
         @param cache: cache for predictions
         @return: 2-dim bool np.array where True corresponds to positions where axiom is satisfied
         """
-        cluster_ids = np.full(ts.shape[0], -1, dtype=int)  # cluster ids for every point of ts
+        cluster_membership = np.full((ts.shape[0], self.cluster_radiuses.shape[0]), False, dtype=bool)  # cluster membership in each cluster for every point of ts
         
         # we store clustering of ts at cache[self.model][self.dim]
         if (cache is not None) and (self.model in cache) and (self.dim in cache[self.model]):
-            cluster_ids = cache[self.model][self.dim]
+            cluster_membership = cache[self.model][self.dim]
         else:
             # specific dimension of time series as pd.Series object
             dim_ts = ts[ts.columns[self.dim]]
@@ -184,15 +180,15 @@ class ClusteringAxiom(object):
             feature_values_list = [feature(dim_ts_embedding.values) for feature in features]
             feature_values = np.hstack(feature_values_list)
             
-            cluster_ids[left_nei: -right_nei] = self.get_cluster_numbers(self.model.transform(feature_values[left_nei: -right_nei, :]))
+            cluster_membership[left_nei: -right_nei, :] = self.get_cluster_membership(self.model.transform(feature_values[left_nei: -right_nei, :]))
             
             if isinstance(cache, dict):
                 if self.model not in cache:
-                    cache[self.model] = { self.dim: cluster_ids }
+                    cache[self.model] = { self.dim: cluster_membership }
                 else:
-                    cache[self.model][self.dim] = cluster_ids
+                    cache[self.model][self.dim] = cluster_membership
 
-        return cluster_ids == self.cluster_id
+        return cluster_membership[:, self.cluster_id]
 
 
 class FeatureExtractionStage(object):
