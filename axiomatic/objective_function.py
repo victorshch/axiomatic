@@ -1,5 +1,24 @@
 # -*- coding: utf-8 -*-
 
+from axiomatic.utils import transform_dataset
+
+
+class Accuracy(object):
+    def calculate(self, recognizer, data_set):
+        """
+        @param recognizer: classifier
+        @param data_set: test data set
+        """
+        ts_list, ts_class = transform_dataset(data_set)
+        predicted_classes = recognizer.predict(ts_list)
+        cnt = 0.0
+        for true_class, predicted_class in zip(ts_class, predicted_classes):
+            if true_class == predicted_class:
+                cnt += 1
+
+        accuracy = cnt / len(ts_class)
+        return accuracy
+
 
 class ObjectiveFunction(object):
     def __init__(self, k_e1, k_e2):
