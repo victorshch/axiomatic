@@ -28,9 +28,7 @@ class AbnormalBehaviorRecognizer(object):
         mark = self.axiom_system.perform_marking(ts)
         res = []
 
-        for s in self.model_dict:
-            now = self.model_dict[s]
-            
+        for s, now in self.model_dict.iteritems():
             distances = dtw_distances(now, mark, lambda a, b: a != b and a != QuestionMarkSymbol)
             
             for i, dist in enumerate(distances):
