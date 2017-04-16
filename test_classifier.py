@@ -1,10 +1,9 @@
 import pickle
-from sklearn.metrics import accuracy_score
 
 from axiomatic.base import TrainingPipeline
-from axiomatic.utils import transform_dataset
 from axiomatic.axiom_training_stage import KMeansClusteringAxiomStage
-from axiomatic.classifier_training_stage import ClassifierTrainingStage
+from axiomatic.genetic_recognizer_training_stage import GeneticRecognizerTrainingStage
+from axiomatic.objective_function import Accuracy
 from axiomatic.ts_classifier import TimeSeriesClassifier
 
 
@@ -19,7 +18,7 @@ clustering_axiom_stage = KMeansClusteringAxiomStage(
 )
 
 # stage for constructing axiom system and abnormal models
-classifier_training_stage = ClassifierTrainingStage()
+classifier_training_stage = GeneticRecognizerTrainingStage()
 
 training_pipeline = TrainingPipeline([clustering_axiom_stage, classifier_training_stage])
 
@@ -29,11 +28,8 @@ print "Artifacts after training: ", artifacts
 
 classifier = TimeSeriesClassifier(artifacts['axiom_system'], artifacts['abn_models'])
 
-# make list of time series and list of class labels
-ts_list, class_labels = transform_dataset(dataset['test'])
-predictions = classifier.predict(ts_list)
-
 # count accuracy
-obj_fn_value = accuracy_score(class_labels, predictions)
+obj_fn = Accuracy()
+obj_fn_value = obj_fn.calculate(classifier, dataset['test'])
 
 print "Accuracy: ", obj_fn_value
