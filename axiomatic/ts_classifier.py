@@ -5,19 +5,14 @@ from axiomatic.utils import dtw_distances
 
 
 class TimeSeriesClassifier(object):
-    def __init__(self, axiom_system, model_dict, config=None):
+    def __init__(self, axiom_system, model_dict):
         """
         @param axiom_system: instance of axiomatic.base.AxiomSystem
         @param model_dict: models for every possible class of time series
-        @param config: config for time series classifier
         """
 
         self.axiom_system = axiom_system
         self.model_dict = model_dict
-
-        self.classification_threshold = 0
-        if config is not None:
-            self.classification_threshold = config.get('classification_threshold', 0)
 
     def _ts_predict(self, ts):
         """
