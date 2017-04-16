@@ -13,24 +13,21 @@ class AxiomSystem(object):
         выполняющихся в соотв. точках ts
         @ts: временной ряд, который необходимо разметить
         """
-        axiom_result = np.empty(shape=[ts.shape[0], 1])
         cache = {}
+        
+        result = np.full(ts.shape[0], -1, dtype=int)
+        
+        if len(self.axiom_list) == 0:
+            print "Warning: perform_marking for an empty axiom system"
+            return result
+        
+        axiom_result = np.hstack([np.array(x.run(ts, cache).reshape(-1, 1)) for x in self.axiom_list])
+        
+        any_axiom_fulfilled = np.any(axiom_result, axis=1)
+        min_axiom_no = np.argmax(axiom_result, axis=1)
+        
+        result[any_axiom_fulfilled] = min_axiom_no[any_axiom_fulfilled]
 
-        for x in self.axiom_list:
-            axiom_result = np.column_stack((axiom_result, x.run(ts, cache)))
-        result = np.zeros(len(ts))
-
-        for i in range(len(ts)):
-            good = False
-
-            for j in range(len(self.axiom_list)):
-                if axiom_result[(i, j)]:
-                    result[i] = j
-                    good = True
-                    break
-
-            if not good:
-                result[i] = -1
         return result
     
     def __repr__(self):
