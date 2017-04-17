@@ -6,6 +6,9 @@ from axiomatic.utils import transform_dataset
 class Accuracy(object):
     def calculate(self, recognizer, data_set):
         """
+        Return the ratio of incorrectly classified time series.
+        Thus will lead to less 'accuracy', better result.
+
         @param recognizer: classifier
         @param data_set: test data set
         """
@@ -13,11 +16,10 @@ class Accuracy(object):
         predicted_classes = recognizer.predict(ts_list)
         cnt = 0.0
         for true_class, predicted_class in zip(ts_class, predicted_classes):
-            if true_class == predicted_class:
+            if true_class != predicted_class:
                 cnt += 1
 
-        accuracy = cnt / len(ts_class)
-        return accuracy
+        return cnt / len(ts_class)
 
 
 class ObjectiveFunction(object):
