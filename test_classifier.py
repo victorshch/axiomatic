@@ -18,7 +18,15 @@ clustering_axiom_stage = KMeansClusteringAxiomStage(
 )
 
 # stage for constructing axiom system and abnormal models
-classifier_training_stage = GeneticRecognizerTrainingStage()
+classifier_training_stage = GeneticRecognizerTrainingStage(
+    config={
+        'population_size': 50,
+        'initial_as_size': 8,
+        'objective_function': Accuracy(),
+        'recognizer': TimeSeriesClassifier,
+        'recognizer_config': {},
+    }
+)
 
 training_pipeline = TrainingPipeline([clustering_axiom_stage, classifier_training_stage])
 
