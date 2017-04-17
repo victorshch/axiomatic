@@ -5,7 +5,7 @@ from axiomatic.utils import dtw_distances
 
 
 class TimeSeriesClassifier(object):
-    def __init__(self, axiom_system, model_dict):
+    def __init__(self, axiom_system, model_dict, config=None):
         """
         @param axiom_system: instance of axiomatic.base.AxiomSystem
         @param model_dict: models for every possible class of time series
