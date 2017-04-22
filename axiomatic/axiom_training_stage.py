@@ -9,6 +9,7 @@ from sklearn.cluster import KMeans
 from axiomatic import settings
 from axiomatic.utils import time_series_embedding
 
+from base import DummyAxiom
 
 class DummyAxiomTrainingStage(object):
     """
