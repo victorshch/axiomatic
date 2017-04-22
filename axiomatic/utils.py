@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import pairwise_distances
 
+from base import QuestionMarkSymbol
+
 
 def dtw_distances_from_matrix(D):
     N = D.shape[0]
@@ -31,7 +33,7 @@ def dtw_distances_from_matrix(D):
             Sa1b = S[a - 1, b]
             Ra1b = R[a - 1, b]
             diag = (Dab + Sa1b1) * (Ra1b1 + 1)
-            right = (Dab + Sab1) * (Rab1 - 1)
+            right = (Dab + Sab1) * (Rab1 + 1)
             down = (Dab + Sa1b) * (Ra1b + 1)
             if down < diag and down < right:
                 S[a, b] = Dab + Sa1b
@@ -49,7 +51,8 @@ def dtw_distances_from_matrix(D):
     return dist
 
 
-def dtw_distances(model, observed_marking, metric):
+def dtw_distances(model, observed_marking):
+    metric = lambda a, b: a != b and a != QuestionMarkSymbol and b != QuestionMarkSymbol
     distancesM = pairwise_distances(
         np.array(model).reshape(-1, 1),
         np.array(observed_marking).reshape(-1, 1),

@@ -12,7 +12,7 @@ with open('datasets/debug_dataset.pickle', 'rb') as f:
     dataset = pickle.load(f)
 
 dummy_axiom_stage = DummyAxiomTrainingStage()
-genetic_recognizer_stage = GeneticRecognizerTrainingStage(dict(n_jobs=1, population_size=10, iteration_count=10, use_question_mark=True, num_axioms_weight=0.1))
+genetic_recognizer_stage = GeneticRecognizerTrainingStage(dict(n_jobs=1, population_size=2, iteration_count=2, use_question_mark=True, num_axioms_weight=0.1))
 
 training_pipeline = TrainingPipeline([dummy_axiom_stage, genetic_recognizer_stage])
 

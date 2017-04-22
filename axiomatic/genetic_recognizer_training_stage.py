@@ -6,8 +6,8 @@ import numpy as np
 import random
 from joblib import Parallel, delayed
 
-from base import AxiomSystem
-from abnormal_behavior_recognizer import AbnormalBehaviorRecognizer, QuestionMarkSymbol
+from base import AxiomSystem, QuestionMarkSymbol
+from abnormal_behavior_recognizer import AbnormalBehaviorRecognizer
 from objective_function import ObjectiveFunction
 
 def index_of(lst, a):
@@ -202,8 +202,10 @@ def _calculateObjectiveForSpecimen(self, specimen, data_set):
     #err2 = np.random.randint(1, 20)
     #specimen.objective = (err1 + 20*err2, err1, err2)
     #return
+    if specimen.objective is not None: return specimen
     objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)
     specimen.objective = (objective[0] + self.num_axioms_weight * len(specimen.axiom_list), objective[1], objective[2])
+    return specimen
 
 class GeneticRecognizerTrainingStage(object):
     def __init__(self, config = dict()):

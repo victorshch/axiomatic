@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-from axiomatic.utils import dtw_distances
-
-
-QuestionMarkSymbol = -2
-
+#from axiomatic.utils import dtw_distances
+from axiomatic.dtw_on_steroids import dtw_distances
 
 class AbnormalBehaviorRecognizer(object):
     def __init__(self, axiom_system, model_dict, params):
@@ -31,7 +28,7 @@ class AbnormalBehaviorRecognizer(object):
         for s in self.model_dict:
             now = self.model_dict[s]
             
-            distances = dtw_distances(now, mark, lambda a, b: a != b and a != QuestionMarkSymbol)
+            distances = dtw_distances(now, mark)
             
             for i, dist in enumerate(distances):
                 if dist <= self.bound:
