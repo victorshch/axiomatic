@@ -43,6 +43,11 @@ class StdDeviation(object):
         """
         return np.std(sample, axis=1).reshape(-1, 1)
 
+def p3(v):
+    return v*v*v
+
+def p4(v):
+    return v*v*v*v
 
 class Kurtosis(object):
     def __call__(self, sample):
@@ -53,10 +58,10 @@ class Kurtosis(object):
         """
         n = sample.shape[1]
 
-        value = np.sum((sample - np.mean(sample, axis=1).reshape(-1, 1))**4, axis=1).reshape(-1, 1) / n
+        value = np.sum(p4(sample - np.mean(sample, axis=1).reshape(-1, 1)), axis=1).reshape(-1, 1) / n
         sigma = np.std(sample, axis=1).reshape(-1, 1)
 
-        return value / sigma**4
+        return value / p4(sigma)
 
 
 class Skewness(object):
@@ -68,10 +73,10 @@ class Skewness(object):
         """
         n = sample.shape[1]
 
-        value = np.sum((sample - np.mean(sample, axis=1).reshape(-1, 1))**3, axis=1).reshape(-1, 1) / n
+        value = np.sum(p3(sample - np.mean(sample, axis=1).reshape(-1, 1)), axis=1).reshape(-1, 1) / n
         sigma = np.std(sample, axis=1).reshape(-1, 1)
 
-        return value / sigma**3
+        return value / p3(sigma)
 
 
 class LinearRegressionCoef(object):
