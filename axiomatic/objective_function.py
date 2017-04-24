@@ -13,7 +13,7 @@ class Accuracy(object):
         @param data_set: test data set
         """
         ts_list, ts_class = transform_dataset(data_set)
-        predicted_classes = recognizer.predict(ts_list)
+        predicted_classes = list(recognizer.predict(ts_list))
         cnt = 0.0
         for true_class, predicted_class in zip(ts_class, predicted_classes):
             if true_class != predicted_class:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from axiomatic.utils import dtw_distances
+from axiomatic.dtw_on_steroids import dtw_distances
 
 
 class TimeSeriesClassifier(object):
@@ -13,6 +13,7 @@ class TimeSeriesClassifier(object):
 
         self.axiom_system = axiom_system
         self.model_dict = model_dict
+        print model_dict
 
     def _ts_predict(self, ts):
         """
@@ -25,7 +26,7 @@ class TimeSeriesClassifier(object):
         class_distances = {}
 
         for class_name, class_model in self.model_dict.iteritems():
-            class_distances[class_name] = np.min(dtw_distances(class_model, marked_ts, lambda a, b: a != b))
+            class_distances[class_name] = np.min(dtw_distances(class_model, marked_ts))
 
         return class_distances
 

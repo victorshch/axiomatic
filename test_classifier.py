@@ -2,29 +2,29 @@ import pickle
 
 from axiomatic.base import TrainingPipeline
 from axiomatic.axiom_training_stage import KMeansClusteringAxiomStage
-from axiomatic.genetic_recognizer_training_stage import GeneticRecognizerTrainingStage
+from axiomatic.genetic_classifier_training_stage import GeneticClassifierTrainingStage
 from axiomatic.objective_function import Accuracy
-from axiomatic.ts_classifier import TimeSeriesClassifier
+from axiomatic.neighbors_classifier import CustomKNearestNeighborsClassifier
 
 
-with open('datasets/debug_classifier_dataset.pickle', 'rb') as f:
+with open('datasets/classification_1d_test_dataset.pickle', 'rb') as f:
     dataset = pickle.load(f)
 
 clustering_axiom_stage = KMeansClusteringAxiomStage(
     {
         'clustering_params': {'n_clusters': 15, 'init': 'k-means++', 'n_init': 10},
-        'feature_extraction_params': {'sample_length': 20, 'ratio': 0.2},
+        'feature_extraction_params': {'sample_length': 15, 'ratio': 0.3},
     }
 )
 
 # stage for constructing axiom system and abnormal models
-classifier_training_stage = GeneticRecognizerTrainingStage(
+classifier_training_stage = GeneticClassifierTrainingStage(
     config={
-        'population_size': 50,
-        'initial_as_size': 8,
+        'population_size': 10,
+        'initial_as_size': 6,
         'objective_function': Accuracy(),
-        'recognizer': TimeSeriesClassifier,
-        'recognizer_config': {},
+        'recognizer': CustomKNearestNeighborsClassifier,
+        'recognizer_config': {'n_neighbors': 2},
     }
 )
 
@@ -34,7 +34,7 @@ artifacts = training_pipeline.train(dataset)
 
 print "Artifacts after training: ", artifacts
 
-classifier = TimeSeriesClassifier(artifacts['axiom_system'], artifacts['abn_models'])
+classifier = CustomKNearestNeighborsClassifier(artifacts['axiom_system'], artifacts['abn_models'], {'n_neighbors': 2})
 
 # count accuracy
 obj_fn = Accuracy()
