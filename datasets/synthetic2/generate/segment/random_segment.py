@@ -1,4 +1,4 @@
-from generate.segment.segment import Segment
+from segment import Segment
 import numpy as np
 
 class RandomSegment(Segment):
