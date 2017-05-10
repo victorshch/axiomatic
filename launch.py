@@ -23,7 +23,7 @@ genetic_recognizer_stage = GeneticRecognizerTrainingStage(dict(n_jobs=1, populat
 
 frequency_stage = TrainingPipeline([frequency_ec_stage, frequency_axiom_stage])
 axiom_union_stage = AxiomUnionStage([frequency_stage, clustering_axiom_stage])
-training_pipeline = TrainingPipeline([clustering_axiom_stage, genetic_recognizer_stage])
+training_pipeline = TrainingPipeline([axiom_union_stage, genetic_recognizer_stage])
 
 artifacts = training_pipeline.train(dataset, dict())
 
