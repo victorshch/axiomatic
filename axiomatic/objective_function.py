@@ -30,6 +30,9 @@ class ObjectiveFunction(object):
                 first_error += 1
             if x[1] == true_class:
                 second_error = 0
+
+        if true_class == "normal":
+          second_error = 0
         return first_error * self.k_e1 + second_error * self.k_e2, first_error, second_error
     
     def calculate(self, recognizer, data_set):
