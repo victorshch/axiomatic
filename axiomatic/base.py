@@ -14,7 +14,8 @@ class AxiomSystem(object):
         выполняющихся в соотв. точках ts
         @ts: временной ряд, который необходимо разметить
         """
-        cache = {}
+
+        cache = []
         
         result = np.full(ts.shape[0], -1, dtype=int)
         
