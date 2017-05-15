@@ -6,7 +6,21 @@ from utils import transform_dataset
 from dtw_on_steroids import dtw_distances
 
 
-class CustomKNearestNeighborsClassifier(object):
+def index_of(lst, predicate):
+    for i, elem in enumerate(lst):
+        if predicate(elem):
+            return i
+    return -1
+
+
+def last_index_of(lst, predicate):
+    i = index_of(reversed(lst), predicate)
+    if i == -1:
+        return -1
+    return len(lst) - i - 1
+
+
+class TimeSeriesKNearestNeighborsClassifier(object):
     def __init__(self, axiom_system, model_dict, config={}):
         self.axiom_system = axiom_system
         self.model_dict = model_dict
@@ -15,8 +29,20 @@ class CustomKNearestNeighborsClassifier(object):
         self.model = KNeighborsClassifier(n_neighbors=self.n_neighbors, metric='precomputed')
         self.encoder = LabelEncoder()
 
-        models, labels = transform_dataset(self.model_dict)
-        self.model_markings = [self.axiom_system.perform_marking(model) for model in models]
+        models, tmp_labels = transform_dataset(self.model_dict)
+
+        labels = []
+        self.model_markings = []
+
+        for i, model in enumerate(models):
+            marking = self.axiom_system.perform_marking(model)
+            first_axiom_index = index_of(marking, lambda x: x >= 0)
+            if first_axiom_index > 0:
+                last_axiom_index = last_index_of(marking, lambda x: x >= 0)
+                stripped_model = marking[first_axiom_index:last_axiom_index + 1]
+                self.model_markings.append(stripped_model)
+                labels.append(tmp_labels[i])
+
         X_train = self.precompute_distances(self.model_markings, self.model_markings)
         y_train = self.encoder.fit_transform(labels)
 

@@ -155,7 +155,10 @@ class ClusteringAxiom(object):
         @return: 2-dim bool np.array where True corresponds to positions where axiom is satisfied
         """
         cluster_ids = np.full(ts.shape[0], -1, dtype=int)  # cluster ids for every point of ts
-        
+
+        if len(ts) < self.feature_extractor.sample_length:
+            return np.zeros(len(ts), dtype=bool)
+
         # we store clustering of ts at cache[self.model][self.dim]
         if (cache is not None) and (self.model in cache) and (self.dim in cache[self.model]):
             cluster_ids = cache[self.model][self.dim]

@@ -8,21 +8,7 @@ import numpy as np
 
 from base import AxiomSystem
 from objective_function import Accuracy
-from neighbors_classifier import CustomKNearestNeighborsClassifier
-
-
-def index_of(lst, predicate):
-    for i, elem in enumerate(lst):
-        if predicate(elem):
-            return i
-    return -1
-
-
-def last_index_of(lst, predicate):
-    i = index_of(reversed(lst), predicate)
-    if i == -1:
-        return -1
-    return len(lst) - i - 1
+from neighbors_classifier import TimeSeriesKNearestNeighborsClassifier
 
 
 class Specimen(object):
@@ -136,12 +122,8 @@ class Mutation(object):
             class_to_change = np.random.choice(specimen.abn_models.keys())
             cl_ts = random.choice(data_set[class_to_change])
             marking = AxiomSystem(specimen.axiom_list).perform_marking(cl_ts)
-
-            first_axiom_index = index_of(marking, lambda x: x > 0)
-            if first_axiom_index > 0:
-                last_axiom_index = last_index_of(marking, lambda x: x > 0)
-                model = cl_ts[first_axiom_index:last_axiom_index + 1]
-                specimen.add_model_for_class(model, class_to_change)
+            if np.any(marking >= 0):
+                specimen.add_model_for_class(cl_ts, class_to_change)
         elif action == MutationActions.RemoveAbnormalModel:
             class_to_change = np.random.choice(specimen.abn_models.keys())
             specimen.remove_model_for_class(class_to_change)
@@ -179,20 +161,22 @@ class Crossover(object):
 
 class GeneticClassifierTrainingStage(object):
     def __init__(self, config={}):
-        self.iteration_count = config.get('iteration_count', 10)
-        self.population_size = config.get('population_size', 100)
+        self.iteration_count = config.get('iteration_count', 50)
+        self.iteration_without_improvement = config.get('iteration_without_improvement', 5)
+        self.population_size = config.get('population_size', 50)
         self.elitism = config.get('elitism', 0.05)
         self.selective_pressure = config.get('selective_pressure', 1.1)
-        self.initial_as_size = config.get('initial_as_size', 5)
-        self.initial_model_length = config.get('initial_model_length', 10)
+        self.initial_as_size = config.get('initial_as_size', 10)
         self.n_models_for_class = config.get('n_models_for_class', 7)
 
         # regularization
         self.num_axioms_weight = config.get('num_axioms_weight', 0.0)
 
         self.objective_function = config.get('objective_function', Accuracy())
-        self.recognizer = config.get('recognizer', CustomKNearestNeighborsClassifier)
+        self.recognizer = config.get('recognizer', TimeSeriesKNearestNeighborsClassifier)
         self.recognizer_config = config.get('recognizer_config', {'n_neighbors': 5})
+
+        self.objectives = []
 
     def generate_initial_population(self, axioms, data_set):
         population = []
@@ -210,15 +194,10 @@ class GeneticClassifierTrainingStage(object):
                     cl_ts = random.choice(data_set[cl])
                     marking = axiom_system.perform_marking(cl_ts)
 
-                    first_axiom_index = index_of(marking, lambda x: x > 0)
-                    if first_axiom_index < 0:
-                        warnings.warn('Bad marking ' + repr(marking))
-                        continue
+                    if np.any(marking >= 0):
+                        abn_models[cl].append(cl_ts)
                     else:
-                        last_axiom_index = last_index_of(marking, lambda x: x > 0)
-                        model = cl_ts[first_axiom_index:last_axiom_index + 1]
-
-                    abn_models[cl].append(model)
+                        warnings.warn('Bad marking ' + repr(marking))
 
             if all(len(models) > 0 for models in abn_models.itervalues()):
                 population.append(Specimen(axiom_list, abn_models))
@@ -230,10 +209,18 @@ class GeneticClassifierTrainingStage(object):
         for i, specimen in enumerate(population):
             if specimen.objective is not None:
                 continue
-            objective = self.objective_function.calculate(
-                self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config),
-                data_set,
-            )
+
+            n_models = 0
+            for cl, models in specimen.abn_models.iteritems():
+                n_models += len(models)
+
+            if n_models < self.recognizer_config['n_neighbors']:
+                objective = 1.0
+            else:
+                objective = self.objective_function.calculate(
+                    self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config),
+                    data_set,
+                )
 
             population[i].objective = objective
 
@@ -263,6 +250,8 @@ class GeneticClassifierTrainingStage(object):
         print "Best objective function", population[0].objective
         print "Worst objective function", population[-1].objective
 
+        self.objectives.append(population[0].objective)
+
         elite_count = int(round(self.elitism * self.population_size))
         new_population.extend(population[:elite_count])
         population = population[elite_count:]
@@ -290,6 +279,10 @@ class GeneticClassifierTrainingStage(object):
         mutation = Mutation()
         crossover = Crossover()
 
+        n_iter_without_improvement = 0
+
+        cur_objective = population[0].objective
+
         for i in xrange(self.iteration_count):
             print "Iteration ", i + 1, "of", self.iteration_count
             mutated = [mutation.mutate(copy.copy(specimen), axioms, train_data_set) for specimen in population]
@@ -310,6 +303,21 @@ class GeneticClassifierTrainingStage(object):
 
             print "Selecting..."
             population = self.select(population)
+
+            # stopping criterion
+            if self.objectives[-1] < 1e-5 and i > 4:
+                break
+
+            if self.objectives[-1] < cur_objective:
+                n_iter_without_improvement = 0
+            else:
+                n_iter_without_improvement += 1
+            cur_objective = self.objectives[-1]
+
+            if n_iter_without_improvement > self.iteration_without_improvement:
+                print "Iters without improvement", n_iter_without_improvement
+                print "Breaking"
+                break
 
         artifacts['axiom_system'] = AxiomSystem(population[0].axiom_list)
         artifacts['abn_models'] = population[0].abn_models
