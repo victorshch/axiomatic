@@ -5,7 +5,7 @@ from difflib import SequenceMatcher
 import random, copy, time
 from math import sqrt
 
-class AxiomsMarking(object):
+class AxiomSystemSpecie(object):
     '''
     Represents a axioms marking.
     Marking = solution
@@ -87,7 +87,7 @@ class GeneticAlgorithm(object):
         
         print('...create population started')
         for i in range(self.config['genetic_algorithms_params']['n_individuals']):
-            s = AxiomsMarking()
+            s = AxiomSystemSpecie()
             s.GenerateRandom(self.config['axioms_set'])
             value, normal_score, anomaly_score = self._knn_objective_function(self._ts_transform(s.axioms))
             s.Update(value, normal_score, anomaly_score)

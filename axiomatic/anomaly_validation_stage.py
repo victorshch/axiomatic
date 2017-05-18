@@ -3,41 +3,7 @@ import numpy as np
 import pandas as pd
 from difflib import SequenceMatcher
 import random, copy, time
-from math import sqrt
-
-class AxiomsMarking(object):
-    '''
-    Represents a axioms marking.
-    Marking = solution
-    '''
-    def __init__(self):
-        self.axioms = []
-        self.obj_f = None
-        self.fitness_f = None
-        self.num = 0
-        self.normal_data_anomaly_score = None
-        self.anomaly_data_anomaly_score = None
-
-    def __computeObjF(self, value=0):
-        self.obj_f = value
-
-    def Update(self, value=0, normal_score=0, anomaly_score=0):
-        '''
-        Updates objective function.
-        Call it after every changing in axioms
-        '''
-        self.__computeObjF(value)
-        self.normal_data_anomaly_score = normal_score
-        self.anomaly_data_anomaly_score = anomaly_score
-
-    def GenerateRandom(self, axioms_set):
-        '''
-        Generates random solution.
-        :param axioms_set: all generated axioms.
-        '''
-        n = random.randint(1, len(axioms_set))
-        self.axioms = random.sample(axioms_set, n) # type(self.axioms)=list
-        #self.Update()      
+from math import sqrt     
    
 class KNN(object):
     def __init__(self, config=dict()):
@@ -201,3 +167,36 @@ class KNN(object):
 
         print('\t done\n')
         
+class KnnDtw(object):    
+    def __init__(self, n_neighbors=5, max_warping_window=10000, subsample_step=1):
+        self.n_neighbors = n_neighbors
+        self.max_warping_window = max_warping_window
+        self.subsample_step = subsample_step
+        
+    def _dtw_distance(self, ts_a, ts_b, d = lambda x,y: abs(x-y)):
+        ts_a, ts_b = np.array(ts_a), np.array(ts_b)
+        M, N = len(ts_a), len(ts_b)
+        cost = sys.maxint * np.ones((M, N))
+
+        cost[0, 0] = d(ts_a[0], ts_b[0])
+        for i in xrange(1, M):
+            cost[i, 0] = cost[i-1, 0] + d(ts_a[i], ts_b[0])
+
+        for j in xrange(1, N):
+            cost[0, j] = cost[0, j-1] + d(ts_a[0], ts_b[j])
+
+        for i in xrange(1, M):
+            for j in xrange(max(1, i - self.max_warping_window),
+                            min(N, i + self.max_warping_window)):
+                choices = cost[i - 1, j - 1], cost[i, j-1], cost[i-1, j]
+                cost[i, j] = min(choices) + d(ts_a[i], ts_b[j])
+
+        return cost[-1, -1]
+    
+    def _dtw_multidim(self, s1, s2):
+        s = 0
+        for i in s1.columns:
+            distance = self._dtw_distance(s1[i], s2[i])
+            s += distance
+        
+        return s
