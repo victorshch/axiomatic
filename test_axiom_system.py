@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import pandas as pd
 import numpy as np
-from axiomatic.base import AxiomSystem, MinMaxAxiom
+from axiomatic.base import AxiomSystem
+from axiomatic.elementary_conditions import MinMaxAxiom
 
 class SampleAxiom(object):
     def __init__(self, params):
