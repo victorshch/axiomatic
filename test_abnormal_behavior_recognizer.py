@@ -1,19 +1,10 @@
 # coding=UTF-8
 import pandas as pd
 import numpy as np
-from axiomatic.base import AxiomSystem
+from axiomatic.base import AxiomSystem, DummyAxiom
 from axiomatic.abnormal_behavior_recognizer import AbnormalBehaviorRecognizer
 
-class SampleAxiom(object):
-    def __init__(self, params):
-        pass
-    
-    # ts -- объект pandas.DataFrame
-    # возвращает булевский pandas.Series, в котором true соотв. точкам, где аксиома выполняется
-    def run(self, ts):
-        return ts[0].shift(1) - ts[0] > 0
-
-axiom_list = [SampleAxiom(1), SampleAxiom(1)]
+axiom_list = [DummyAxiom(), DummyAxiom()]
 ts = pd.DataFrame(np.random.random((10, 2)))
 
 now = AxiomSystem(axiom_list)

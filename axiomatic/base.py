@@ -28,6 +28,7 @@ class AxiomSystem(object):
         min_axiom_no = np.argmax(axiom_result, axis=1)
         
         result[any_axiom_fulfilled] = min_axiom_no[any_axiom_fulfilled]
+
         return result
     
     def __repr__(self):
@@ -38,7 +39,7 @@ class DummyAxiom(object):
     """
     Dummy axiom is satisfied on every position in all dimensions
     """
-    def run(self, ts):
+    def run(self, ts, cache):
         """
         Check whether axiom is satisfied.
         @param ts: pd.DataFrame containing time series
@@ -144,11 +145,10 @@ class TrainingPipeline(object):
     def __init__(self, stage_list):
         self.stage_list = stage_list
 
-    def train(self, data_set, artifacts):
+    def train(self, data_set, artifacts=dict()):
         """
         Run stages from self.stage_list consecutively on same artifacts dict
         """
-        artifacts = dict()
         for stage in self.stage_list:
             artifacts = stage.train(data_set, artifacts)
         return artifacts

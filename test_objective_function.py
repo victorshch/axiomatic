@@ -11,7 +11,7 @@ class SampleAxiom(object):
     
     # ts -- объект pandas.DataFrame
     # возвращает булевский pandas.Series, в котором true соотв. точкам, где аксиома выполняется
-    def run(self, ts):
+    def run(self, ts, cache):
         return ts[0].shift(1) - ts[0] > 0
 
 axiom_list = [SampleAxiom(1), SampleAxiom(1)]
