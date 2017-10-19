@@ -25,9 +25,17 @@ def load(path, event_type, true_or_false):
                 if curr_event_type == event_type and curr_true_or_false == true_or_false:
                     matrix = scipy.io.loadmat(name + '.mat')['val']
                     now = dict()
+                    ecg_num, pulse_num = 1, 1
 
                     for row_type in range(len(row_types)):
-                        now[row_types[row_type]] = scipy.signal.resample(matrix[row_type], 1000)
+
+                        if row_types[row_type] in ['I', 'II', 'III', 'aVL', 'aVR', 'aVF', 'V']:
+                            now['ECG' + str(ecg_num)] = scipy.signal.resample(matrix[row_type], 30)
+                            ecg_num += 1
+                        if row_types[row_type] in ['PLETH', 'ABP']:
+                            if pulse_num == 1:
+                                now['PULSE' + str(pulse_num)] = scipy.signal.resample(matrix[row_type], 30)
+                                pulse_num += 1
                     res.append(pd.DataFrame(data=now))
     return res
     
