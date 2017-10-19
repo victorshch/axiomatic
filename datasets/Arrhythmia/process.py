@@ -1,4 +1,5 @@
 import os
+import sys
 
 strange_types = dict()
 abnormal_events = {'Tachycardia' : {}, 'Ventricular_Tachycardia' : {}, 'Asystole' : {}, 'Ventricular_Flutter_Fib' : {}, 'Bradycardia' : {}}
@@ -7,9 +8,11 @@ for event in abnormal_events:
   basic_set = {'abp_pleth' : 0, 'abp' : 0, 'pleth' : 0}
   abnormal_events[event] = {'false' : [0, basic_set], 'true' : [0, basic_set]}
 
-for filename in os.listdir('.'):
+for filename in os.listdir(sys.argv[1]):
+    filename = sys.argv[1] + '/'+ filename
+
     if os.path.isfile(filename):
-        name, ext = os.path.splitext(os.path.basename(filename))
+        name, ext = os.path.splitext(filename)
         
         if ext == '.hea':
             desc = open(filename, 'r')
