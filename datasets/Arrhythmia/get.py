@@ -24,6 +24,9 @@ def load(path, event_type, true_or_false):
 
                 if curr_event_type == event_type and curr_true_or_false == true_or_false:
                     matrix = scipy.io.loadmat(name + '.mat')['val']
+
+                    if len(matrix[0]) != 75000:
+                      continue
                     now = dict()
                     ecg_num, pulse_num = 1, 1
 

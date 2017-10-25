@@ -78,7 +78,7 @@ class Axiom(object):
 
         freq = 0
 
-        for ts in range(len(data_norm)):
+        for i in range(len(data_norm)):
             freq += sum(self.run(data_norm[i], cache_norm[i]))
         freq /= len(data_norm)
         return res / (0.000005 + freq)
