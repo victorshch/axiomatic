@@ -34,14 +34,14 @@ def load(path, event_type, true_or_false):
 
                     for row_type in range(len(row_types)):
                         if row_types[row_type] in ['I', 'II', 'III', 'aVL', 'aVR', 'aVF', 'V', 'MCL']:
-                            now['ECG' + str(ecg_num)] = scipy.signal.resample(matrix[row_type], 30)
+                            now['ECG' + str(ecg_num)] = scipy.signal.resample(matrix[row_type], 300)
 
                             if min(now['ECG' + str(ecg_num)]) == 0 and max(now['ECG' + str(ecg_num)]) == 0:
                                 not_append = True
                             ecg_num += 1
                         if row_types[row_type] in ['PLETH', 'ABP']:
                             if pulse_num == 1:
-                                now['PULSE' + str(pulse_num)] = scipy.signal.resample(matrix[row_type], 30)
+                                now['PULSE' + str(pulse_num)] = scipy.signal.resample(matrix[row_type], 300)
                                 pulse_num += 1
                     
                     if not not_append:
