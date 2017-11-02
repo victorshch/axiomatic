@@ -22,7 +22,25 @@ class ObjectiveFunction(object):
         """
 
         res = recognizer.recognize(ts)
-        first_error = 0
+        abnormal = False
+
+        for x in res:
+            if x[1] != 'normal':
+              abnormal = True
+        
+        # return (TP, TN, FP, FN)
+
+        if abnormal:
+            if true_class == 'normal':
+                return (0, 0, 1, 0)
+            else:
+                return (1, 0, 0, 0)
+        else:
+            if true_class == 'normal':
+                return (0, 1, 0, 0)
+            else:
+                return (0, 0, 0, 1)
+        '''first_error = 0
         second_error = 1
         
         for x in res:
@@ -33,7 +51,7 @@ class ObjectiveFunction(object):
 
         if true_class == "normal":
           second_error = 0
-        return first_error * self.k_e1 + second_error * self.k_e2, first_error, second_error
+        return first_error * self.k_e1 + second_error * self.k_e2, first_error, second_error'''
     
     def calculate(self, recognizer, data_set):
         """Вычислим стоимость ошибок распознавателя на данном множестве учатков, если для них известен истинный класс
@@ -42,9 +60,10 @@ class ObjectiveFunction(object):
         data_set - dict (имя класса - список траекторий)
         """
 
-        res = (0, 0, 0)
+        res = (0, 0, 0, 0)
 
         for true_class in data_set:
             for ts in data_set[true_class]:
                 res = tuple(map(sum, zip(res, self.calculate_one(recognizer, ts, true_class))))
+        res = (-(res[0] + res[1]) / (res[0] + res[1] + res[2] + 5 * res[3]), res[0], res[1], res[2], res[3])
         return res

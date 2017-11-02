@@ -204,7 +204,7 @@ def _calculateObjectiveForSpecimen(self, specimen, data_set):
     #return
     if specimen.objective is not None: return specimen
     objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)
-    specimen.objective = (objective[0] + self.num_axioms_weight * len(specimen.axiom_list), objective[1], objective[2])
+    specimen.objective = (objective[0] + self.num_axioms_weight * len(specimen.axiom_list), objective[1], objective[2], objective[3], objective[4])
     return specimen
 
 class GeneticRecognizerTrainingStage(object):

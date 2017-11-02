@@ -2,7 +2,37 @@
 
 import numpy as np
 from statsmodels.tsa.ar_model import AR
+import math
 
+def generate_binary(sample):
+  now = sample - np.mean(sample, axis=1).reshape(-1, 1)
+  VP = np.max(now, axis=1).reshape(-1, 1)
+  VN = np.min(now, axis=1).reshape(-1, 1)
+  PC = np.sum(np.logical_and(0 < now, now < VP * 0.1), axis=1)
+  NC = np.sum(np.logical_and(0.1 * VN < now, now < 0), axis=1)
+  n = sample.shape[1]
+
+  TD = np.logical_and(PC + NC >= 0.4 * n, PC < NC).reshape(-1, 1) * 0.2 * VP + np.logical_and(PC + NC >= -0.4 * n, PC > NC).reshape(-1, 1) * 0.2 * VN
+  return sample >= TD
+
+class Leakage(object):
+    def __call__(self, sample):
+        return (np.sum(np.abs(sample), axis=1) * np.sum(np.hstack((sample[:, 0].reshape(-1, 1), sample[:, 1:] - sample[:, :-1])), axis=1) ** (-1) * 2 * math.pi).reshape(-1, 1) # check
+
+
+class BinaryCovariance(object):
+    def __call__(self, sample):
+        return np.var(sample, axis=1).reshape(-1, 1)
+
+class BinaryFrequency(object):
+    def __call__(self, sample):
+        sample = generate_binary(sample)
+        return np.sum(np.abs(sample[:, 1 :] - sample[:, : -1]), axis=1).reshape(-1, 1)
+
+class AreaBinary(object):
+    def __call__(self, sample):
+        sample = generate_binary(sample)
+        return np.maximum(np.sum(sample, axis=1), np.sum(np.full(sample.shape, 1) - sample, axis=1)).reshape(-1, 1)
 
 class Maximum(object):
     def __call__(self, sample):
