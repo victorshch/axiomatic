@@ -5,6 +5,7 @@ import copy
 import numpy as np
 import random
 from joblib import Parallel, delayed
+from datetime import datetime
 
 from base import AxiomSystem, QuestionMarkSymbol
 from abnormal_behavior_recognizer import AbnormalBehaviorRecognizer
@@ -204,7 +205,7 @@ def _calculateObjectiveForSpecimen(self, specimen, data_set):
     #return
     if specimen.objective is not None: return specimen
     objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)
-    specimen.objective = (objective[0] + self.num_axioms_weight * len(specimen.axiom_list), objective[1], objective[2], objective[3], objective[4])
+    specimen.objective = (objective[0] + self.num_axioms_weight * len(specimen.axiom_list), objective[1], objective[2])
     return specimen
 
 class GeneticRecognizerTrainingStage(object):
@@ -271,6 +272,7 @@ class GeneticRecognizerTrainingStage(object):
         return newPopulation
 
     def train(self, data_set, artifacts):
+        print(datetime.now())
         axioms = [a for cl in artifacts['axioms'].keys() for a in artifacts['axioms'][cl] ]
         #print "Initial axioms: ", axioms
         train_data_set = data_set['train']
