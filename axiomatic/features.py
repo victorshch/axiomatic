@@ -15,10 +15,33 @@ def generate_binary(sample):
   TD = np.logical_and(PC + NC >= 0.4 * n, PC < NC).reshape(-1, 1) * 0.2 * VP + np.logical_and(PC + NC >= -0.4 * n, PC > NC).reshape(-1, 1) * 0.2 * VN
   return sample >= TD
 
+class Count2(object):
+    def __call__(self, sample):
+        res = np.zeros(len(sample))
+
+        for i in range(len(sample)):
+            now = np.zeros(len(sample[i]))
+
+            for j in range(len(sample[i])):
+                if j >= 2:
+                    now[j] = (14 * now[j - 1] - 7 * now[j - 2] + (sample[i][j] - sample[i][j - 2]) / 2) / 8
+                else:
+                    now[j] = sample[i][j]
+            now = np.abs(now)
+            res[i] = np.sum(np.logical_and(np.mean(now) <= now, now <= np.max(now)))
+        return res.reshape(-1, 1)
+
 class Leakage(object):
     def __call__(self, sample):
-        return (np.sum(np.abs(sample), axis=1) * np.sum(np.hstack((sample[:, 0].reshape(-1, 1), sample[:, 1:] - sample[:, :-1])), axis=1) ** (-1) * 2 * math.pi).reshape(-1, 1) # check
+        T = (np.sum(np.abs(sample), axis=1) * np.sum(np.abs(np.hstack((sample[:, 0].reshape(-1, 1), sample[:, 1:] - sample[:, :-1]))), axis=1) ** (-1) * 2 * math.pi).astype(int)
+        res = np.zeros(len(sample))
 
+        for i in range(len(T)):
+            if T[i] // 2 >= len(sample[i]):
+                res[i] = 1
+            else:
+                res[i] = np.sum(np.abs(sample[i][T[i] // 2 :] + sample[i][: -(T[i] // 2)])) * np.sum(np.abs(sample[i][T[i] // 2 :]) + np.abs(sample[i][: -(T[i] // 2)])) ** (-1)
+        return res.reshape(-1, 1)
 
 class BinaryCovariance(object):
     def __call__(self, sample):
@@ -33,6 +56,25 @@ class AreaBinary(object):
     def __call__(self, sample):
         sample = generate_binary(sample)
         return np.maximum(np.sum(sample, axis=1), np.sum(np.full(sample.shape, 1) - sample, axis=1)).reshape(-1, 1)
+
+class Complexity(object):
+    def __call__(self, sample):
+        sample = generate_binary(sample)
+        res = np.zeros(len(sample))
+
+        for i in range(len(sample)):
+            j = 1
+            k = 2
+            c = 1
+            
+            while k < len(sample[i]):
+                while k < len(sample[i]) and sample[i][j : k] in sample[i][: k - 1]:
+                    k += 1
+                j = k
+                k = j + 1
+                c += 1
+            res[i] = c * math.log(len(sample[i])) / len(sample[i])
+        return res.reshape(-1, 1)
 
 class Maximum(object):
     def __call__(self, sample):

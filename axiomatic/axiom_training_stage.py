@@ -202,6 +202,7 @@ class FeatureExtractionStage(object):
         self.sample_length = config.get('sample_length', settings.DEFAULT_SAMPLE_LENGTH)
         self.ratio = config.get('ratio', settings.DEFAULT_RATIO)
         self.features = config.get('features', settings.DEFAULT_FEATURES)
+        print(self.features)
 
     def make_samples(self, ts_list):
         """
