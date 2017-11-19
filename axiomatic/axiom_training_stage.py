@@ -4,7 +4,9 @@ import random
 import numpy as np
 from scipy import optimize
 from scipy.ndimage import maximum_filter
+from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+from sklearn.pipeline import Pipeline
 from copy import deepcopy
 
 from axiomatic import settings
@@ -258,6 +260,7 @@ class KMeansClusteringAxiomStage(object):
 
         # stores feature extractor
         self.feature_extractor = FeatureExtractionStage(config.get('feature_extraction_params', {}))
+        self.normalize_features = config.get("normalize_features", True)
 
     @staticmethod
     def get_all_time_series(training_set):
@@ -297,10 +300,19 @@ class KMeansClusteringAxiomStage(object):
 
         # generate axioms for this dimension
         axioms = []
-        for cluster in range(self.clustering_models[dim].n_clusters):
+        for cluster in range(self.clustering_models[dim].named_steps["kmeans"].n_clusters):
             axioms.append(ClusteringAxiom(self.clustering_models[dim], self.feature_extractor, dim, cluster))
 
         return axioms
+
+    def make_clusterizer(self):
+        scaler = StandardScaler()
+        kmeans = KMeans(**self.config.get('clustering_params', {}))
+        pipeline_steps = [("kmeans", kmeans)]
+        if self.normalize_features:
+            pipeline_steps = [("scaler", scaler)] + pipeline_steps
+        pipeline = Pipeline(pipeline_steps)
+        return pipeline
 
     def train(self, dataset, artifacts={}):
         """
@@ -311,7 +323,7 @@ class KMeansClusteringAxiomStage(object):
 
         all_time_series = self.get_all_time_series(dataset['train'])
         self.n_dimensions = all_time_series[0].shape[1]
-        self.clustering_models = [KMeans(**self.config.get('clustering_params', {})) for i in range(self.n_dimensions)]
+        self.clustering_models = [self.make_clusterizer() for i in range(self.n_dimensions)]
 
         all_axioms = []
 
