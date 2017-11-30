@@ -29,9 +29,9 @@ print(datetime.now())
 FEATURES = {'Leakage' : Leakage(), 'BinaryCovariance' : BinaryCovariance(), 'BinaryFrequency' : BinaryFrequency(), 'AreaBinary' : AreaBinary(), 'Complexity' : Complexity(), 'Kurtosis' : Kurtosis(), 'Count2' : Count2(20), 'LinearRegressionCoef' : LinearRegressionCoef()}
 
 if sys.argv[1] == 'UNITED':
-  clustering_axiom_stage = KMeansClusteringAxiomStage({'clustering_params': {'n_clusters': 5,
+  clustering_axiom_stage = [KMeansClusteringAxiomStage({'clustering_params': {'n_clusters': 5,
         'init': 'k-means++', 'n_init': 10}, 'feature_extraction_params': {'sample_length': 20, 'ratio': 0.2, 'features' :
-        [FEATURES[feature] for feature in sys.argv[2 :]]}})
+        [FEATURES[feature] for feature in sys.argv[2 :]]}})]
 elif sys.argv[1] == 'SEPARATE':
   clustering_axiom_stage = [KMeansClusteringAxiomStage({'clustering_params': {'n_clusters': 5,
         'init': 'k-means++', 'n_init': 10}, 'feature_extraction_params': {'sample_length': 20, 'ratio': 0.2, 'features' :
@@ -43,7 +43,7 @@ genetic_recognizer_stage = GeneticRecognizerTrainingStage(dict(n_jobs=1, populat
 
 #frequency_stage = TrainingPipeline([frequency_ec_stage, frequency_axiom_stage])
 #axiom_union_stage = AxiomUnionStage([frequency_stage, clustering_axiom_stage])
-axiom_union_stage = AxiomUnionStage([clustering_axiom_stage]) #
+axiom_union_stage = AxiomUnionStage(clustering_axiom_stage) #
 training_pipeline = TrainingPipeline([axiom_union_stage, genetic_recognizer_stage])
 
 artifacts = training_pipeline.train(dataset, dict())

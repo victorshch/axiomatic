@@ -91,5 +91,5 @@ class TestObjectiveFunction(object):
         for true_class in data_set:
             for ts in data_set[true_class]:
                 res = tuple(map(sum, zip(res, self.calculate_one(recognizer, ts, true_class))))
-        res = (-(res[0] + res[1]) / (res[0] + res[1] + res[2] + 5 * res[3]), res[0], res[1], res[2], res[3])
+        res = (-float(res[0] + res[1]) / (res[0] + res[1] + res[2] + 5 * res[3]), res[0], res[1], res[2], res[3])
         return res

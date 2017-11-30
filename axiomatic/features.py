@@ -21,12 +21,12 @@ class Count2(object):
         now[0] = 1
 
         for i in range(1, n):
-            now[i] = (14 * now[i - 1] - 7 * now[i - 2]) / 8
+            now[i] = float(14 * now[i - 1] - 7 * now[i - 2]) / 8
         self.mul = np.hstack(tuple(np.concatenate((now[i :], np.full(i, 0))).reshape(-1, 1) for i in range(n))).T
 
     def __call__(self, sample):
         sample = np.nan_to_num(sample)
-        sample = (sample - np.hstack((np.full((len(sample), 2), 0), sample[:, : -2]))) / 16
+        sample = (sample - np.hstack((np.full((len(sample), 2), 0.0), sample[:, : -2]))) / 16
         now = np.abs(np.dot(sample, self.mul))
         return np.sum(now.mean(axis=1).reshape(-1, 1) <= now, axis=1).reshape(-1, 1)
         '''res = np.zeros(len(sample))
