@@ -50,16 +50,6 @@ class ObjectiveFunction(object):
 
 
 class TestObjectiveFunction(object):
-    def __init__(self, k_e1, k_e2):
-        """Иницализация
-        Параметры:
-        k_e1 - стоимость ошибки первого рода
-        k_e2 - стоимость ошибки второго рода
-        """
-
-        self.k_e1 = k_e1
-        self.k_e2 = k_e2
-    
     def calculate_one(self, recognizer, ts, true_class):
         """Тестируем данный распознаватель - вычислим стоимость ошибок распознавателя на данном участке, если известен истинный класс нештатного
         поведения на данном участке

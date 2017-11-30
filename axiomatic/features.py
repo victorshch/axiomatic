@@ -16,8 +16,20 @@ def generate_binary(sample):
   return sample >= TD
 
 class Count2(object):
+    def __init__(self, n):
+        now = np.zeros(n)
+        now[0] = 1
+
+        for i in range(1, n):
+            now[i] = (14 * now[i - 1] - 7 * now[i - 2]) / 8
+        self.mul = np.hstack(tuple(np.concatenate((now[i :], np.full(i, 0))).reshape(-1, 1) for i in range(n))).T
+
     def __call__(self, sample):
-        res = np.zeros(len(sample))
+        sample = np.nan_to_num(sample)
+        sample = (sample - np.hstack((np.full((len(sample), 2), 0), sample[:, : -2]))) / 16
+        now = np.abs(np.dot(sample, self.mul))
+        return np.sum(now.mean(axis=1).reshape(-1, 1) <= now, axis=1).reshape(-1, 1)
+        '''res = np.zeros(len(sample))
 
         for i in range(len(sample)):
             now = np.zeros(len(sample[i]))
@@ -29,7 +41,7 @@ class Count2(object):
                     now[j] = sample[i][j]
             now = np.abs(now)
             res[i] = np.sum(np.logical_and(np.mean(now) <= now, now <= np.max(now)))
-        return res.reshape(-1, 1)
+        return res.reshape(-1, 1)'''
 
 class Leakage(object):
     def __call__(self, sample):
@@ -45,6 +57,7 @@ class Leakage(object):
 
 class BinaryCovariance(object):
     def __call__(self, sample):
+        sample = generate_binary(sample)
         return np.var(sample, axis=1).reshape(-1, 1)
 
 class BinaryFrequency(object):
