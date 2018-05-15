@@ -4,7 +4,7 @@ import pandas as pd
 import scipy.signal
 import numpy as np
 
-def load(path, event_type, true_or_false):
+def load(path, event_types, true_or_false, resample, ecg_only = False):
     res = []
 
     for filename in os.listdir(path):
@@ -23,7 +23,7 @@ def load(path, event_type, true_or_false):
                 curr_event_type = desc.readline()[1 :].rstrip()
                 curr_true_or_false = desc.readline()[1 : ].split()[0].lower()
 
-                if curr_event_type == event_type and curr_true_or_false == true_or_false:
+                if (event_types == 'all' or curr_event_type in event_types) and curr_true_or_false == true_or_false:
                     matrix = scipy.io.loadmat(name + '.mat')['val']
 
                     if len(matrix[0]) != 75000:
@@ -34,21 +34,22 @@ def load(path, event_type, true_or_false):
 
                     for row_type in range(len(row_types)):
                         if row_types[row_type] in ['I', 'II', 'III', 'aVL', 'aVR', 'aVF', 'V', 'MCL']:
-                            now['ECG' + str(ecg_num)] = scipy.signal.resample(matrix[row_type], 300)
+                            if resample:
+                              now['ECG' + str(ecg_num)] = scipy.signal.resample(matrix[row_type], 300)
+                            else:
+                              now['ECG' + str(ecg_num)] = matrix[row_type]
 
-                            if min(now['ECG' + str(ecg_num)]) == 0 and max(now['ECG' + str(ecg_num)]) == 0:
+                            if min(now['ECG' + str(ecg_num)]) == max(now['ECG' + str(ecg_num)]):
                                 not_append = True
                             ecg_num += 1
-                        if row_types[row_type] in ['PLETH', 'ABP']:
+                        if not ecg_only and row_types[row_type] in ['PLETH', 'ABP']:
                             if pulse_num == 1:
-                                now['PULSE' + str(pulse_num)] = scipy.signal.resample(matrix[row_type], 300)
+                                if resample:
+                                  now['PULSE' + str(pulse_num)] = scipy.signal.resample(matrix[row_type], 300)
+                                else:
+                                  now['PULSE' + str(pulse_num)] = matrix[row_type]
                                 pulse_num += 1
                     
                     if not not_append:
                         res.append(pd.DataFrame(data=now))
     return res
-    
-#res = load(sys.argv[1], sys.argv[2], sys.argv[3])
-#print(res)
-#print()
-#print(len(res))

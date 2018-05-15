@@ -49,7 +49,7 @@ class ObjectiveFunction(object):
         return res
 
 
-class TestObjectiveFunction(object):
+class ScoreObjectiveFunction(object):
     def calculate_one(self, recognizer, ts, true_class):
         """Тестируем данный распознаватель - вычислим стоимость ошибок распознавателя на данном участке, если известен истинный класс нештатного
         поведения на данном участке

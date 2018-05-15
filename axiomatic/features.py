@@ -3,6 +3,7 @@
 import numpy as np
 from statsmodels.tsa.ar_model import AR
 import math
+from scipy.signal import periodogram
 
 def generate_binary(sample):
   now = sample - np.mean(sample, axis=1).reshape(-1, 1)
@@ -15,24 +16,66 @@ def generate_binary(sample):
   TD = np.logical_and(PC + NC >= 0.4 * n, PC < NC).reshape(-1, 1) * 0.2 * VP + np.logical_and(PC + NC >= -0.4 * n, PC > NC).reshape(-1, 1) * 0.2 * VN
   return sample >= TD
 
-class Count2(object):
-    def __init__(self, n):
-        now = np.zeros(n)
-        now[0] = 1
 
-        for i in range(1, n):
+class Count1(object):
+    def __init__(self, n, mode = 'table'):
+        self.mode = mode
+
+        if self.mode == 'table':
+          now = np.zeros(n)
+          now[0] = 1
+
+          for i in range(1, n):
             now[i] = float(14 * now[i - 1] - 7 * now[i - 2]) / 8
-        self.mul = np.hstack(tuple(np.concatenate((now[i :], np.full(i, 0))).reshape(-1, 1) for i in range(n))).T
+          self.mul = np.hstack(tuple(np.concatenate((now[i :], np.full(i, 0))).reshape(-1, 1) for i in range(n))).T
 
     def __call__(self, sample):
-        sample = np.nan_to_num(sample)
-        sample = (sample - np.hstack((np.full((len(sample), 2), 0.0), sample[:, : -2]))) / 16
-        now = np.abs(np.dot(sample, self.mul))
-        return np.sum(now.mean(axis=1).reshape(-1, 1) <= now, axis=1).reshape(-1, 1)
-        '''res = np.zeros(len(sample))
+        if 'mode' not in dir(self) or self.mode == 'table':
+          sample = np.nan_to_num(sample)
+          sample = (sample - np.hstack((np.full((len(sample), 2), 0.0), sample[:, : -2]))) / 16
+          now = np.abs(np.dot(sample, self.mul))
+          return np.sum(now.max(axis=1).reshape(-1, 1) / 2.0 <= now, axis=1).reshape(-1, 1)
+        else:
+          res = np.zeros(len(sample))
+          now = np.zeros(len(sample[0]))
 
-        for i in range(len(sample)):
-            now = np.zeros(len(sample[i]))
+          for i in range(len(sample)):
+            # now = np.zeros(len(sample[i]))
+
+            for j in range(len(sample[i])):
+                if j >= 2:
+                    now[j] = (14 * now[j - 1] - 7 * now[j - 2] + (sample[i][j] - sample[i][j - 2]) / 2) / 8
+                else:
+                    now[j] = sample[i][j]
+            now = np.abs(now)
+            res[i] = np.sum(np.logical_and(np.max(now) / 2 <= now, now <= np.max(now)))
+          return res.reshape(-1, 1)
+
+
+class Count2(object):
+    def __init__(self, n, mode = 'table'):
+        self.mode = mode
+
+        if self.mode == 'table':
+          now = np.zeros(n)
+          now[0] = 1
+
+          for i in range(1, n):
+            now[i] = float(14 * now[i - 1] - 7 * now[i - 2]) / 8
+          self.mul = np.hstack(tuple(np.concatenate((now[i :], np.full(i, 0))).reshape(-1, 1) for i in range(n))).T
+
+    def __call__(self, sample):
+        if 'mode' not in dir(self) or self.mode == 'table':
+          sample = np.nan_to_num(sample)
+          sample = (sample - np.hstack((np.full((len(sample), 2), 0.0), sample[:, : -2]))) / 16
+          now = np.abs(np.dot(sample, self.mul))
+          return np.sum(now.mean(axis=1).reshape(-1, 1) <= now, axis=1).reshape(-1, 1)
+        else:
+          res = np.zeros(len(sample))
+          now = np.zeros(len(sample[0]))
+
+          for i in range(len(sample)):
+            # now = np.zeros(len(sample[i]))
 
             for j in range(len(sample[i])):
                 if j >= 2:
@@ -41,10 +84,52 @@ class Count2(object):
                     now[j] = sample[i][j]
             now = np.abs(now)
             res[i] = np.sum(np.logical_and(np.mean(now) <= now, now <= np.max(now)))
-        return res.reshape(-1, 1)'''
+          return res.reshape(-1, 1)
+
+
+class Count3(object):
+    def __init__(self, n, mode = 'table'):
+        self.mode = mode
+
+        if self.mode == 'table':
+          now = np.zeros(n)
+          now[0] = 1
+
+          for i in range(1, n):
+            now[i] = float(14 * now[i - 1] - 7 * now[i - 2]) / 8
+          self.mul = np.hstack(tuple(np.concatenate((now[i :], np.full(i, 0))).reshape(-1, 1) for i in range(n))).T
+
+    def __call__(self, sample):
+        if 'mode' not in dir(self) or self.mode == 'table':
+          sample = np.nan_to_num(sample)
+          sample = (sample - np.hstack((np.full((len(sample), 2), 0.0), sample[:, : -2]))) / 16
+          now = np.abs(np.dot(sample, self.mul))
+          return np.sum(np.logical_and((now.mean(axis=1) - now.std(axis=1)).reshape(-1, 1) <= now, now <= (now.mean(axis=1) + now.std(axis=1)).reshape(-1, 1)), axis=1).reshape(-1, 1)
+        else:
+          res = np.zeros(len(sample))
+          now = np.zeros(len(sample[0]))
+
+          for i in range(len(sample)):
+            # now = np.zeros(len(sample[i]))
+
+            for j in range(len(sample[i])):
+                if j >= 2:
+                    now[j] = (14 * now[j - 1] - 7 * now[j - 2] + (sample[i][j] - sample[i][j - 2]) / 2) / 8
+                else:
+                    now[j] = sample[i][j]
+            now = np.abs(now)
+            res[i] = np.sum(np.logical_and(np.mean(now) - np.std(now) <= now, now <= np.mean(now) + np.std(now)))
+          return res.reshape(-1, 1)
+
 
 class Leakage(object):
     def __call__(self, sample):
+        sample = np.nan_to_num(sample)
+        
+        for i in range(len(sample)):
+          if min(sample[i]) == max(sample[i]):
+            sample[i] = np.ones(len(sample[i]))
+        
         T = (np.sum(np.abs(sample), axis=1) * np.sum(np.abs(np.hstack((sample[:, 0].reshape(-1, 1), sample[:, 1:] - sample[:, :-1]))), axis=1) ** (-1) * 2 * math.pi).astype(int)
         res = np.zeros(len(sample))
 
@@ -55,23 +140,31 @@ class Leakage(object):
                 res[i] = np.sum(np.abs(sample[i][T[i] // 2 :] + sample[i][: -(T[i] // 2)])) * np.sum(np.abs(sample[i][T[i] // 2 :]) + np.abs(sample[i][: -(T[i] // 2)])) ** (-1)
         return res.reshape(-1, 1)
 
+
 class BinaryCovariance(object):
     def __call__(self, sample):
+        sample = np.nan_to_num(sample)
         sample = generate_binary(sample)
-        return np.var(sample, axis=1).reshape(-1, 1)
+        return np.var(sample, axis=1).reshape(-1, 1).astype('float64')
+
 
 class BinaryFrequency(object):
     def __call__(self, sample):
+        sample = np.nan_to_num(sample)
         sample = generate_binary(sample)
-        return np.sum(np.abs(sample[:, 1 :] - sample[:, : -1]), axis=1).reshape(-1, 1)
+        return np.sum(np.abs(sample[:, 1 :] ^ sample[:, : -1]), axis=1).reshape(-1, 1).astype('float64')
+
 
 class AreaBinary(object):
     def __call__(self, sample):
+        sample = np.nan_to_num(sample)
         sample = generate_binary(sample)
-        return np.maximum(np.sum(sample, axis=1), np.sum(np.full(sample.shape, 1) - sample, axis=1)).reshape(-1, 1)
+        return np.maximum(np.sum(sample, axis=1), np.sum(np.full(sample.shape, 1) - sample, axis=1)).reshape(-1, 1).astype('float64')
+
 
 class Complexity(object):
     def __call__(self, sample):
+        sample = np.nan_to_num(sample)
         sample = generate_binary(sample)
         res = np.zeros(len(sample))
 
@@ -88,6 +181,31 @@ class Complexity(object):
                 c += 1
             res[i] = c * math.log(len(sample[i])) / len(sample[i])
         return res.reshape(-1, 1)
+
+
+def integrate_periodogram(sample, left, right):
+    f, Pxx = periodogram(sample, 80, axis=1)
+    f = np.logical_and(left <= f, f <= right)
+    Pxx = Pxx * np.repeat([f], len(sample), axis=0)
+    res = np.sum(Pxx, axis=1)
+    return res.reshape(-1, 1)
+
+
+class IntegralRatioHigh(object):
+    def __call__(self, sample):
+        sample = np.nan_to_num(sample)
+        A = integrate_periodogram(sample, 5, 15)
+        B = integrate_periodogram(sample, 5, 40)
+        return A / B
+
+
+class IntegralRatioLow(object):
+    def __call__(self, sample):
+        sample = np.nan_to_num(sample)
+        A = integrate_periodogram(sample, 1, 40)
+        B = integrate_periodogram(sample, 0, 40)
+        return A / B
+
 
 class Maximum(object):
     def __call__(self, sample):
@@ -135,17 +253,23 @@ def p4(v):
     return v*v*v*v
 
 class Kurtosis(object):
-    def __call__(self, sample):
+    def __call__(self, samplee):
+        sample = np.nan_to_num(samplee)
         """
         See https://en.wikipedia.org/wiki/Kurtosis
         @param sample: m x n numpy array, m -- number of samples, n -- length of each sample
         @return: m x 1 numpy array containing kurtosis for each sample
         """
-        n = sample.shape[1]
+        try:
+          n = sample.shape[1]
+        
+          value = np.sum(p4(sample - np.mean(sample, axis=1).reshape(-1, 1)), axis=1).reshape(-1, 1) / n
+          sigma = np.std(sample, axis=1).reshape(-1, 1)
 
-        value = np.sum(p4(sample - np.mean(sample, axis=1).reshape(-1, 1)), axis=1).reshape(-1, 1) / n
-        sigma = np.std(sample, axis=1).reshape(-1, 1)
-
+          sigma[sigma == 0] = 1
+        except:
+          print(n, sample)
+          exit()
         return value / p4(sigma)
 
 
@@ -156,11 +280,13 @@ class Skewness(object):
         @param sample: m x n numpy array, m -- number of samples, n -- length of each sample
         @return: m x 1 numpy array containing skewness for each sample
         """
+        sample = np.nan_to_num(sample)
         n = sample.shape[1]
 
         value = np.sum(p3(sample - np.mean(sample, axis=1).reshape(-1, 1)), axis=1).reshape(-1, 1) / n
         sigma = np.std(sample, axis=1).reshape(-1, 1)
 
+        sigma[sigma == 0] = 1
         return value / p3(sigma)
 
 

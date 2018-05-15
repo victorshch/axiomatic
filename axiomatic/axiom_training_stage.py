@@ -18,6 +18,8 @@ from axiomatic.base import AbstractAxiom, Axiom, DummyAxiom
 from axiomatic.elementary_conditions import form_matrix
 from axiomatic.base import AbstractAxiom, Axiom, DummyAxiom
 
+from tqdm import tqdm
+
 class DummyAxiomTrainingStage(object):
     """
     This training stage creates dummy axioms for every abnormal behavior class
@@ -59,16 +61,16 @@ class FrequencyECTrainingStage(object):
 
         cache = self.form_dict(data_set)
         artifacts["cache"] = cache
-
-        for name in data_set["train"]:
+        
+        for name in tqdm(data_set["train"]):
             if name != "normal":
                 class_axioms = []
 
-                for dim in range(maxdim):
+                for dim in tqdm(range(maxdim)):
                     dim_axioms = []
 
-                    for axiom in self.axiom_list:
-                        for sign in [-1, 1]:
+                    for axiom in tqdm(self.axiom_list):
+                        for sign in tqdm([-1, 1]):
                             abstract_axiom = AbstractAxiom(sign, dim, axiom)
                             rranges = abstract_axiom.bounds(data_set["train"][name] + normal, self.num_part)
 
@@ -109,14 +111,14 @@ class FrequencyAxiomTrainingStage:
         result = dict()
         normal = data_set["train"]["normal"]
 
-        for name in axioms:
+        for name in tqdm(axioms):
             now = [Axiom(x) for x in axioms[name]]
             nums = [x.run_all(data_set["train"][name], normal, cache[name], cache["normal"]) for x in now]
 
-            for i in range(self.max_depth):
+            for i in tqdm(range(self.max_depth)):
                 add = []
 
-                for pos1 in range(len(now)):
+                for pos1 in tqdm(range(len(now))):
                     for pos2 in range(pos1 + 1, len(now)):
                         axiom_or = now[pos1].logical_or(now[pos2])
                         axiom_and = now[pos1].logical_and(now[pos2])
@@ -220,7 +222,6 @@ class FeatureExtractionStage(object):
         for ts in ts_list:
             start_counts = random.sample(range(ts_len - self.sample_length), n_samples)
             samples.extend([ts[j:j + self.sample_length] for j in start_counts])
-
         return samples
 
     def make_features(self, sample_list):

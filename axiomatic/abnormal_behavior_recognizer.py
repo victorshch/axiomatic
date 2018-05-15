@@ -21,7 +21,7 @@ class AbnormalBehaviorRecognizer(object):
         Параметры:
         ts - текущий путь
         """
-
+        
         mark = self.axiom_system.perform_marking(ts)
         res = []
 
@@ -35,3 +35,17 @@ class AbnormalBehaviorRecognizer(object):
                     res.append((i, s))
                     break
         return res
+
+
+class UnitedAbnormalBehaviorRecognizer(object):
+  def __init__(self, recognizers):
+    self.recognizers = recognizers
+
+  def recognize(self, ts):
+    for recognizer in self.recognizers:
+      now = recognizer.recognize(ts)
+
+      for ind, cls in now:
+        if cls != 'normal':
+          return [(0, 'abnormal')]
+    return [(0, 'normal')]

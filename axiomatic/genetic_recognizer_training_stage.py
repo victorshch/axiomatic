@@ -9,7 +9,7 @@ from datetime import datetime
 
 from base import AxiomSystem, QuestionMarkSymbol
 from abnormal_behavior_recognizer import AbnormalBehaviorRecognizer
-from objective_function import ObjectiveFunction
+from objective_function import ScoreObjectiveFunction as ObjectiveFunction
 
 def index_of(lst, a):
     if not callable(a): f = lambda x: x == a
@@ -205,13 +205,13 @@ def _calculateObjectiveForSpecimen(self, specimen, data_set):
     #return
     if specimen.objective is not None: return specimen
     objective = self.objective_function.calculate(self.recognizer(AxiomSystem(specimen.axiom_list), specimen.abn_models, self.recognizer_config), data_set)
-    specimen.objective = (objective[0] + self.num_axioms_weight * len(specimen.axiom_list), objective[1], objective[2])
+    specimen.objective = (objective[0] + self.num_axioms_weight * len(specimen.axiom_list), objective[1], objective[2], objective[3], objective[4])
     return specimen
 
 class GeneticRecognizerTrainingStage(object):
     def __init__(self, config = dict()):
         self.iteration_count = config.get('iteration_count', 10)
-        self.objective_function = config.get('objective_function', ObjectiveFunction(1, 20))
+        self.objective_function = config.get('objective_function', ObjectiveFunction())
         self.population_size = config.get('population_size', 100)
         self.elitism = config.get('elitism', 0.05)
         self.selective_pressure = config.get('selective_pressure', 1.1)
