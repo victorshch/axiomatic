@@ -3,19 +3,19 @@ from algo.mclust_t1_launcher import MclustT1Launcher
 from algo.mss_t1_launcher import MssT1Launcher
 from algo.mss_tcomp_launcher import MssTCompLauncher
 
-#MclustTCompLauncher().run(
-#    {
-#      "Asystole" : ["Skewness"],
-#      "Tachycardia" : ["BinaryCovariance"],
-#      "Ventricular_Tachycardia" : ["BinaryCovariance", "BinaryFrequency"],
-#      "Bradycardia" : ["Count2", "BinaryCovariance"],
-#      "Ventricular_Flutter_Fib" : ["Count2"]
-#    }
-#)
+MclustTCompLauncher().run(
+    {
+      "Asystole" : ["Skewness"],
+      "Tachycardia" : ["BinaryCovariance"],
+      "Ventricular_Tachycardia" : ["BinaryCovariance", "BinaryFrequency"],
+      "Bradycardia" : ["Count2", "BinaryCovariance"],
+      "Ventricular_Flutter_Fib" : ["Count2"]
+    }
+)
 
-#MclustT1Launcher().run(['BinaryCovariance'])
+MclustT1Launcher().run(['BinaryCovariance'])
 
-#MssT1Launcher().run(['BinaryFrequency'], ['MinMaxAxiom', 'IntegralAxiom', 'FirstDiffAxiom', 'RelativeChangeAxiom'])
+MssT1Launcher().run(['BinaryFrequency'], ['MinMaxAxiom', 'IntegralAxiom', 'FirstDiffAxiom', 'RelativeChangeAxiom'])
 
 MssTCompLauncher().run(
     {
